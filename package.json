@@ -1,0 +1,18 @@
+{
+  "name": "game",
+  "version": "2.0.0",
+  "description": "A simple template project to quickly get up and running with Phaser.",
+  "main": "deploay/index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": "http://github.com/gamecook/phaser-template",
+  "author": "Jesse Freeman",
+  "license": "MIT",
+  "devDependencies": {
+    "grunt": "^1.0.3",
+    "grunt-contrib-concat": "^1.0.1",
+    "grunt-contrib-connect": "^2.0.0",
+    "grunt-contrib-watch": "^1.1.0"
+  }
+}
