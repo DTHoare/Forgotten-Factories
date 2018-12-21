@@ -1,3 +1,40 @@
+class Interactive extends Phaser.Physics.Matter.Image{
+
+    constructor(scene, x, y, texture, id){
+        super(scene.matter.world, x, y, texture, id);
+        this.properties = {}
+        this.setStatic(true);
+        this.body.isSensor = true;
+
+    }
+
+    format() {
+      if(this.properties["Text"]) {
+        this.formattedText = this.addLineBreaks(this.properties["Text"], 28);
+      }
+    }
+
+    addLineBreaks(text, maxLetters) {
+      const split = text.split(/( )/g);
+      let lines = [];
+
+      function nextLine() {
+        let newLine = "";
+        while (`${newLine} ${split[0]}`.length < maxLetters && split.length) {
+          newLine += split.shift();
+        }
+        lines.push(newLine.trim());
+        if (split.length) {
+          nextLine();
+        }
+      }
+
+      nextLine();
+
+      return lines.join("\n");
+    }
+}
+
 function PlayerState(){
   this.manaRegen = true;
   this.charging = false;
@@ -41,7 +78,11 @@ class Player extends Phaser.Physics.Matter.Image{
 
     constructor(scene, x, y, texture){
         super(scene.matter.world, x, y, texture);
+        this.scene = scene;
         this.state = new PlayerState();
+        this.setCollisionCategory(collision_player);
+        this.setCollidesWith([collision_block, collision_blockPhysical, collision_interactive]);
+        this.currentInteractive = null;
 
         const { Body, Bodies } = Phaser.Physics.Matter.Matter; // Native Matter modules
         const { width: w, height: h } = this;
@@ -65,7 +106,7 @@ class Player extends Phaser.Physics.Matter.Image{
           .setBounce(0.2);
 
         this.isTouching = { left: false, right: false, ground: false };
-        scene.matter.world.on("beforeupdate", this.resetTouching, this);
+        scene.matter.world.on("beforeupdate", this.reset, this);
 
         scene.matterCollision.addOnCollideStart({
           objectA: [this.sensors.bottom, this.sensors.left, this.sensors.right],
@@ -75,6 +116,17 @@ class Player extends Phaser.Physics.Matter.Image{
         scene.matterCollision.addOnCollideActive({
           objectA: [this.sensors.bottom, this.sensors.left, this.sensors.right],
           callback: this.onSensorCollide,
+          context: this
+        });
+        scene.matterCollision.addOnCollideActive({
+          objectA: this,
+          callback: function(eventData) {
+            const { bodyB, gameObjectB, pair} = eventData;
+            if(gameObjectB instanceof Interactive) {
+            //if(gameObjectB instanceof Interactive) {
+              this.currentInteractive = gameObjectB;
+            }
+          },
           context: this
         });
     }
@@ -92,10 +144,11 @@ class Player extends Phaser.Physics.Matter.Image{
       }
     }
 
-    resetTouching() {
+    reset() {
       this.isTouching.left = false;
       this.isTouching.right = false;
       this.isTouching.ground = false;
+      this.currentInteractive = null;
     }
 
     generateParticles() {
@@ -153,6 +206,15 @@ class Player extends Phaser.Physics.Matter.Image{
         this.state.spell = "bubble";
       } else {
         this.state.spell = "teleport";
+      }
+    }
+
+    interact() {
+      if (this.currentInteractive.properties["interact"] === "book") {
+        //var text = this.scene.add.bitmapText(this.x,this.y + 100, 'editundo', this.currentInteractive.formattedText);
+        game.scene.add('BookScene', Scene_book, true, {text: this.currentInteractive.formattedText});
+        game.scene.start('BookScene');
+        this.scene.scene.pause();
       }
     }
 }
@@ -274,9 +336,9 @@ class Projectile_Bubble extends Projectile{
          width: 76,
          height: 46
        }, {
-         friction: 0.5,
+         friction: 0.8,
          frictionAir: 0.08,
-         frictionStatic: 0.5,
+         frictionStatic: 0.8,
          mass: 100,
          chamfer: 28,
          inertia: 12000
@@ -299,11 +361,86 @@ class Projectile_Bubble extends Projectile{
   }
 }
 
+class Scene_book extends Phaser.Scene {
+
+    constructor ()
+    {
+        super({ key: 'BookScene', active: true });
+        this.text = "test";
+        this.helpText = "Q to close"
+        this.textLeft;
+        this.textRight;
+
+
+    }
+
+    textToPages() {
+      const split = this.text.split(/\n|\r/g);
+      let pages = [];
+      var maxLines = 8;
+
+      function nextLine() {
+        let newPage = "";
+        var i = 0;
+        while (i < maxLines && split.length) {
+          newPage += split.shift();
+          newPage += "\n\n";
+          //console.log(newPage);
+          i ++;
+        }
+        pages.push(newPage);
+        if (split.length) {
+          nextLine();
+        }
+      }
+      nextLine();
+      this.textLeft = pages[0];
+      this.textRight = pages[1];
+
+
+    }
+
+    preload ()
+    {
+      //this.load.bitmapFont('editundo', 'assets/font/editundo_0.png', 'assets/font/editundo.fnt');
+      this.load.image('book', 'assets/book_placeholder.png');
+    }
+
+    create ()
+    {
+      this.text = this.sys.settings.data["text"];
+      this.textToPages();
+      this.add.image(480, 400, 'book');
+      var booktextL = this.add.bitmapText(100, 180, 'editundo', this.textLeft);
+      booktextL.setTint(0x000000);
+      var booktextR = this.add.bitmapText(500, 180, 'editundo', this.textRight);
+      booktextR.setTint(0x000000);
+
+      var helpertext = this.add.bitmapText(700, 20, 'editundo', this.helpText);
+
+      //  Grab a reference to the Game Scene
+      var game = this.scene.get('GameScene');
+      this.keyQ = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Q);
+
+    }
+
+    update () {
+
+      if (Phaser.Input.Keyboard.JustDown(this.keyQ)) {
+        game.scene.resume('GameScene');
+        //this.scene.stop();
+        game.scene.remove('BookScene');
+      }
+
+    }
+}
+
 class Scene_game extends Phaser.Scene {
 
   constructor ()
   {
     super('GameScene');
+    this.books = [];
   }
 
   focusPlayer() {
@@ -324,8 +461,9 @@ class Scene_game extends Phaser.Scene {
     this.load.image('projectile', 'assets/projectile_placeholder.png');
     this.load.image('projectile_large', 'assets/projectile_large_placeholder.png');
 
+
     // map made with Tiled in JSON format
-    this.load.tilemapTiledJSON('map', 'assets/maps/demo_level2.json');
+    this.load.tilemapTiledJSON('map', 'assets/maps/demo_level_tutorial.json');
     // tiles in spritesheet
     this.load.spritesheet('tiles', 'assets/maps/tiles_placeholder.png', {frameWidth: 32, frameHeight: 32});
   }
@@ -339,31 +477,51 @@ class Scene_game extends Phaser.Scene {
     collision_block = this.matter.world.nextCategory();
     collision_particle = this.matter.world.nextCategory();
     collision_ghost = this.matter.world.nextCategory();
+    collision_blockPhysical = this.matter.world.nextCategory();
 
     //platform = this.matter.add.image(320,240, 'platformTile',null, { isStatic: true });
     //platform.setCollisionCategory(collision_block);
 
     // load the map
-    const map = this.make.tilemap({key: 'map'});
+    var map = this.make.tilemap({key: 'map'});
 
     // tiles for the ground layer
-    const groundTiles = map.addTilesetImage('Tiles','tiles');
+    var tiles = map.addTilesetImage('Tiles','tiles');
     // create the ground layer
-    const groundLayer = map.createDynamicLayer('world', groundTiles, 0, 0);
+    var groundLayer = map.createDynamicLayer('world', tiles, 0, 0);
     groundLayer.setCollisionByProperty({ collides: true });
     this.matter.world.convertTilemapLayer(groundLayer);
 
     // groundLayer.setCollisionCategory(collision_block);
     groundLayer.forEachTile(tile => {
-      if (tile.collides) {
+      if (tile.properties.collides && tile.properties.magicCollides) {
         tile.physics.matterBody.setCollisionCategory(collision_block);
+      } else if (!tile.properties.collides && tile.properties.magicCollides) {
+
+      } else if (tile.properties.collides && !tile.properties.magicCollides) {
+        tile.physics.matterBody.setCollisionCategory(collision_blockPhysical);
       }
     });
 
+
+    map.getObjectLayer("books").objects.forEach(book => {
+      const { x, y, width, height } = book;
+      // Tiled origin for its coordinate system is (0, 1), but we want coordinates relative to an
+      // origin of (0.5, 0.5)
+      var bookBody = this.add
+        //.image(x + width / 2, y - height / 2, "tiles", 40)
+        .existing(new Interactive(this, x + width / 2, y - height / 2, "tiles", 40));
+        for (var i = 0; i < book.properties.length; i++){
+          var key = book.properties[i];
+          bookBody.properties[key["name"]] = key["value"];
+          bookBody.format();
+        }
+      this.books[this.books.length] = bookBody;
+    });
+
+
     const { x, y } = map.findObject("Spawn", obj => obj.name === "Spawn Point");
     player = this.add.existing( new Player(this, x, y, 'player') );
-    player.setCollisionCategory(collision_player);
-    player.setCollidesWith([collision_block]);
 
     // set bounds so the camera won't go outside the game world
     this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
@@ -378,6 +536,7 @@ class Scene_game extends Phaser.Scene {
     this.keyS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
     this.keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
     this.keyE = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
+    this.keyQ = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Q);
     this.keySpace = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
     this.input.on('pointerup', function (pointer) {
@@ -437,7 +596,7 @@ class Scene_game extends Phaser.Scene {
       this.add.existing(p);
     }
 
-    var moveForce = 0.01;
+    var moveForce = 0.005;
     var airForce = 0.004;
 
     if ((this.cursors.left.isDown || this.keyA.isDown) ){
@@ -510,6 +669,10 @@ class Scene_game extends Phaser.Scene {
 
     if (Phaser.Input.Keyboard.JustDown(this.keyE) && !player.state.charging) {
       player.switchSpell();
+    }
+
+    if (Phaser.Input.Keyboard.JustDown(this.keyQ) && player.currentInteractive) {
+      player.interact();
     }
 
     for (var i = playerProjectiles.length-1; i >= 0; i--) {
@@ -634,3 +797,5 @@ class Scene_UI extends Phaser.Scene {
  var collision_block;
  var collision_particle;
  var collision_ghost;
+ var collision_blockPhysical;
+ var collision_interactive;

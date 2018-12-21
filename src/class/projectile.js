@@ -115,9 +115,9 @@ class Projectile_Bubble extends Projectile{
          width: 76,
          height: 46
        }, {
-         friction: 0.5,
+         friction: 0.8,
          frictionAir: 0.08,
-         frictionStatic: 0.5,
+         frictionStatic: 0.8,
          mass: 100,
          chamfer: 28,
          inertia: 12000

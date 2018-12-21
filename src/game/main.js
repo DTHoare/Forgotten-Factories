@@ -44,3 +44,5 @@
  var collision_block;
  var collision_particle;
  var collision_ghost;
+ var collision_blockPhysical;
+ var collision_interactive;

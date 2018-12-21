@@ -41,7 +41,11 @@ class Player extends Phaser.Physics.Matter.Image{
 
     constructor(scene, x, y, texture){
         super(scene.matter.world, x, y, texture);
+        this.scene = scene;
         this.state = new PlayerState();
+        this.setCollisionCategory(collision_player);
+        this.setCollidesWith([collision_block, collision_blockPhysical, collision_interactive]);
+        this.currentInteractive = null;
 
         const { Body, Bodies } = Phaser.Physics.Matter.Matter; // Native Matter modules
         const { width: w, height: h } = this;
@@ -65,7 +69,7 @@ class Player extends Phaser.Physics.Matter.Image{
           .setBounce(0.2);
 
         this.isTouching = { left: false, right: false, ground: false };
-        scene.matter.world.on("beforeupdate", this.resetTouching, this);
+        scene.matter.world.on("beforeupdate", this.reset, this);
 
         scene.matterCollision.addOnCollideStart({
           objectA: [this.sensors.bottom, this.sensors.left, this.sensors.right],
@@ -75,6 +79,17 @@ class Player extends Phaser.Physics.Matter.Image{
         scene.matterCollision.addOnCollideActive({
           objectA: [this.sensors.bottom, this.sensors.left, this.sensors.right],
           callback: this.onSensorCollide,
+          context: this
+        });
+        scene.matterCollision.addOnCollideActive({
+          objectA: this,
+          callback: function(eventData) {
+            const { bodyB, gameObjectB, pair} = eventData;
+            if(gameObjectB instanceof Interactive) {
+            //if(gameObjectB instanceof Interactive) {
+              this.currentInteractive = gameObjectB;
+            }
+          },
           context: this
         });
     }
@@ -92,10 +107,11 @@ class Player extends Phaser.Physics.Matter.Image{
       }
     }
 
-    resetTouching() {
+    reset() {
       this.isTouching.left = false;
       this.isTouching.right = false;
       this.isTouching.ground = false;
+      this.currentInteractive = null;
     }
 
     generateParticles() {
@@ -153,6 +169,15 @@ class Player extends Phaser.Physics.Matter.Image{
         this.state.spell = "bubble";
       } else {
         this.state.spell = "teleport";
+      }
+    }
+
+    interact() {
+      if (this.currentInteractive.properties["interact"] === "book") {
+        //var text = this.scene.add.bitmapText(this.x,this.y + 100, 'editundo', this.currentInteractive.formattedText);
+        game.scene.add('BookScene', Scene_book, true, {text: this.currentInteractive.formattedText});
+        game.scene.start('BookScene');
+        this.scene.scene.pause();
       }
     }
 }

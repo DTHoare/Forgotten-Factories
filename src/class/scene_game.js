@@ -3,6 +3,7 @@ class Scene_game extends Phaser.Scene {
   constructor ()
   {
     super('GameScene');
+    this.books = [];
   }
 
   focusPlayer() {
@@ -23,8 +24,9 @@ class Scene_game extends Phaser.Scene {
     this.load.image('projectile', 'assets/projectile_placeholder.png');
     this.load.image('projectile_large', 'assets/projectile_large_placeholder.png');
 
+
     // map made with Tiled in JSON format
-    this.load.tilemapTiledJSON('map', 'assets/maps/demo_level2.json');
+    this.load.tilemapTiledJSON('map', 'assets/maps/demo_level_tutorial.json');
     // tiles in spritesheet
     this.load.spritesheet('tiles', 'assets/maps/tiles_placeholder.png', {frameWidth: 32, frameHeight: 32});
   }
@@ -38,31 +40,51 @@ class Scene_game extends Phaser.Scene {
     collision_block = this.matter.world.nextCategory();
     collision_particle = this.matter.world.nextCategory();
     collision_ghost = this.matter.world.nextCategory();
+    collision_blockPhysical = this.matter.world.nextCategory();
 
     //platform = this.matter.add.image(320,240, 'platformTile',null, { isStatic: true });
     //platform.setCollisionCategory(collision_block);
 
     // load the map
-    const map = this.make.tilemap({key: 'map'});
+    var map = this.make.tilemap({key: 'map'});
 
     // tiles for the ground layer
-    const groundTiles = map.addTilesetImage('Tiles','tiles');
+    var tiles = map.addTilesetImage('Tiles','tiles');
     // create the ground layer
-    const groundLayer = map.createDynamicLayer('world', groundTiles, 0, 0);
+    var groundLayer = map.createDynamicLayer('world', tiles, 0, 0);
     groundLayer.setCollisionByProperty({ collides: true });
     this.matter.world.convertTilemapLayer(groundLayer);
 
     // groundLayer.setCollisionCategory(collision_block);
     groundLayer.forEachTile(tile => {
-      if (tile.collides) {
+      if (tile.properties.collides && tile.properties.magicCollides) {
         tile.physics.matterBody.setCollisionCategory(collision_block);
+      } else if (!tile.properties.collides && tile.properties.magicCollides) {
+
+      } else if (tile.properties.collides && !tile.properties.magicCollides) {
+        tile.physics.matterBody.setCollisionCategory(collision_blockPhysical);
       }
     });
 
+
+    map.getObjectLayer("books").objects.forEach(book => {
+      const { x, y, width, height } = book;
+      // Tiled origin for its coordinate system is (0, 1), but we want coordinates relative to an
+      // origin of (0.5, 0.5)
+      var bookBody = this.add
+        //.image(x + width / 2, y - height / 2, "tiles", 40)
+        .existing(new Interactive(this, x + width / 2, y - height / 2, "tiles", 40));
+        for (var i = 0; i < book.properties.length; i++){
+          var key = book.properties[i];
+          bookBody.properties[key["name"]] = key["value"];
+          bookBody.format();
+        }
+      this.books[this.books.length] = bookBody;
+    });
+
+
     const { x, y } = map.findObject("Spawn", obj => obj.name === "Spawn Point");
     player = this.add.existing( new Player(this, x, y, 'player') );
-    player.setCollisionCategory(collision_player);
-    player.setCollidesWith([collision_block]);
 
     // set bounds so the camera won't go outside the game world
     this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
@@ -77,6 +99,7 @@ class Scene_game extends Phaser.Scene {
     this.keyS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
     this.keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
     this.keyE = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
+    this.keyQ = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Q);
     this.keySpace = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
     this.input.on('pointerup', function (pointer) {
@@ -136,7 +159,7 @@ class Scene_game extends Phaser.Scene {
       this.add.existing(p);
     }
 
-    var moveForce = 0.01;
+    var moveForce = 0.005;
     var airForce = 0.004;
 
     if ((this.cursors.left.isDown || this.keyA.isDown) ){
@@ -209,6 +232,10 @@ class Scene_game extends Phaser.Scene {
 
     if (Phaser.Input.Keyboard.JustDown(this.keyE) && !player.state.charging) {
       player.switchSpell();
+    }
+
+    if (Phaser.Input.Keyboard.JustDown(this.keyQ) && player.currentInteractive) {
+      player.interact();
     }
 
     for (var i = playerProjectiles.length-1; i >= 0; i--) {
