@@ -20,6 +20,7 @@ class Projectile extends Phaser.Physics.Matter.Image{
     this.setCollisionCategory(collision_particle);
     this.setCollidesWith([collision_block]);
     this.setBounce(0.8);
+    this.setTint(0x60fcff);
   }
 
 
@@ -30,8 +31,9 @@ class Projectile extends Phaser.Physics.Matter.Image{
     this.age ++;
     var colorValue = Math.round(255.*(1.- (this.age/this.maxAge)));
     var hex = Phaser.Display.Color.RGBToString(colorValue, colorValue, colorValue, 255, "0x");
-    //console.log(hex);
-    this.setTint(hex);
+    //this.setTint(hex);
+    this.setTint(0x60fcff);
+    this.setAlpha(1.- (this.age/ (this.maxAge-1)) );
     this.limitSpeed();
   }
 
@@ -73,6 +75,7 @@ class Projectile_Teleport extends Projectile{
      });
      this.setCollidesWith([collision_block]);
      this.setBounce(0.0);
+     this.setTint(0x60fcff);
 
      scene.matterCollision.addOnCollideStart({
        objectA: [this],
@@ -90,6 +93,7 @@ class Projectile_Teleport extends Projectile{
 class Projectile_Ghost extends Projectile{
   constructor(scene, x, y, texture){
     super(scene, x, y, texture);
+    this.scene = scene
     this.age = 30;
     this.maxAge = 5000;
     this.maxVelocity = 20.;
@@ -123,15 +127,15 @@ class Projectile_Ghost extends Projectile{
     this.age ++;
     var colorValue = Math.round(255.*(1.- ( (this.age-1)/this.maxAge)));
     var hex = Phaser.Display.Color.RGBToString(colorValue, colorValue, colorValue, 255, "0x");
-    //console.log(hex);
     this.setTint(hex);
     this.limitSpeed();
   }
+
 }
 
 /**
  * Extension of projectile that is used for the bubble spell. Has a long lasting,
- *     large and massive body that is unaffected by gravity. 
+ *     large and massive body that is unaffected by gravity.
  */
 class Projectile_Bubble extends Projectile{
   constructor(scene, x, y, texture){
@@ -156,10 +160,6 @@ class Projectile_Bubble extends Projectile{
      this.setBounce(0.0);
      this.setIgnoreGravity(true);
 
-     // scene.matter.world.on('afterupdate', function () {
-     //   console.log(this);
-     //   this.body.isSleeping = false;
-     // },this);
   }
 
   init(charge, angle) {

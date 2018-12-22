@@ -8,6 +8,7 @@ class Scene_game extends Phaser.Scene {
   {
     super('GameScene');
     this.books = [];
+    this.trail = [];
   }
 
   focusPlayer() {
@@ -26,6 +27,7 @@ class Scene_game extends Phaser.Scene {
     this.load.image('platformTile', 'assets/platform_placeholder.png');
     this.load.image('projectile', 'assets/projectile_placeholder.png');
     this.load.image('projectile_large', 'assets/projectile_large_placeholder.png');
+    this.load.image('door', 'assets/door_placeholder.png');
 
     // map made with Tiled in JSON format
     this.load.tilemapTiledJSON('map', 'assets/maps/demo_level_tutorial.json');
@@ -69,16 +71,22 @@ class Scene_game extends Phaser.Scene {
       // Tiled origin for its coordinate system is (0, 1), but we want coordinates relative to an
       // origin of (0.5, 0.5)
       var bookBody = this.add
-        .existing(new Interactive(this, x + width / 2, y - height / 2, "tiles", 40));
+        .existing(new Book(this, x + width / 2, y - height / 2, "tiles", 40, book));
 
-        //copy properties across
-        // TODO: move into Interactive class
-        for (var i = 0; i < book.properties.length; i++){
-          var key = book.properties[i];
-          bookBody.properties[key["name"]] = key["value"];
-          bookBody.format();
-        }
       this.books[this.books.length] = bookBody;
+    });
+
+    map.getObjectLayer("levers").objects.forEach(lever => {
+      const { x, y, width, height } = lever;
+      var leverBody = this.add
+        .existing(new Lever(this, x + width / 2, y - height / 2, "tiles", 41, lever));
+    });
+
+    map.getObjectLayer("doors").objects.forEach(door => {
+      const { x, y, width, height } = door;
+      var doorBody = this.add
+        .existing(new Structure(this, x + width / 2, y + height / 2, "door", door));
+
     });
 
     // add spawn point and player
@@ -137,6 +145,11 @@ class Scene_game extends Phaser.Scene {
      * On update event, check if mouse is held down, and if so, keep charging
      */
     this.events.on('update', function () {
+      //update trail
+      for (var i = this.trail.length-1; i >= 0; i--) {
+        this.trail[i].destroy();
+        this.trail.splice(i,1);
+      }
       if (game.input.activePointer.isDown) {
         player.state.startCharge();
 
@@ -146,7 +159,7 @@ class Scene_game extends Phaser.Scene {
         var projectile = this.add.existing( new Projectile_Ghost(this, player.x+player.state.particleSourceX, player.y+player.state.particleSourceY, 'projectile_large') );
         projectile.init(player.state.charge, angle);
         projectile.maxAge = 50;
-        playerProjectiles[playerProjectiles.length] = projectile;
+        //playerProjectiles[playerProjectiles.length] = projectile;
 
         //change player direction to face the cursor for aiming
         var direction;
@@ -156,6 +169,20 @@ class Scene_game extends Phaser.Scene {
           direction = 'l';
         }
         player.faceDirection(direction);
+
+        for (var i = 0; i < 15; i++) {
+          projectile.body.force.y = projectile.body.mass * 2 * 0.001;
+
+          Phaser.Physics.Matter.Matter.Body.update(projectile.body, 16.67, 1, 1);
+          projectile.limitSpeed();
+
+          this.trail[this.trail.length] = this.add.image(projectile.x, projectile.y, 'projectile_large');
+          this.trail[this.trail.length-1].setTint(0x60fcff);
+          this.trail[this.trail.length-1].setAlpha(1 - i/14.);
+        }
+
+        projectile.destroy();
+
       }
     }, this);
 

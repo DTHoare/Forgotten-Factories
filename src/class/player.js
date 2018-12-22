@@ -29,11 +29,11 @@ class Player extends Phaser.Physics.Matter.Image{
         const { width: w, height: h } = this;
 
         //set up the player body and sensors
-        const mainBody = Bodies.rectangle(0, 0, w * 0.8, h, { chamfer: { radius: 3 } });
+        const mainBody = Bodies.rectangle(0, 0, w * 0.85, h, { chamfer: { radius: 3 } });
         this.sensors = {
           bottom: Bodies.rectangle(0, h * 0.5, w * 0.7, 4, { isSensor: true }),
-          left: Bodies.rectangle(-w * 0.4, 0, 6, h * 0.2, { isSensor: true }),
-          right: Bodies.rectangle(w * 0.4, 0, 6, h * 0.2, { isSensor: true })
+          left: Bodies.rectangle(-w * 0.43, 0, 6, h * 0.2, { isSensor: true }),
+          right: Bodies.rectangle(w * 0.43, 0, 6, h * 0.2, { isSensor: true })
         };
         const compoundBody = Body.create({
           parts: [mainBody, this.sensors.bottom, this.sensors.left, this.sensors.right],
@@ -72,7 +72,12 @@ class Player extends Phaser.Physics.Matter.Image{
             if(gameObjectB instanceof Interactive) {
             //if(gameObjectB instanceof Interactive) {
               this.currentInteractive = gameObjectB;
-              this.scene.events.emit('changeTooltip', "Q to read");
+              if(gameObjectB instanceof Book) {
+                this.scene.events.emit('changeTooltip', "Q to read");
+              } else if (gameObjectB instanceof Lever) {
+                this.scene.events.emit('changeTooltip', "Q to pull");
+              }
+
             }
           },
           context: this
@@ -160,12 +165,12 @@ class Player extends Phaser.Physics.Matter.Image{
 
     faceRight() {
       this.state.facing = 'r';
-      this.state.particleSourceX = + 14;
+      this.state.particleSourceX = + 11;
     }
 
     faceLeft() {
       this.state.facing = 'l';
-      this.state.particleSourceX = - 14;
+      this.state.particleSourceX = - 11;
     }
 
     switchSpell() {
@@ -190,6 +195,9 @@ class Player extends Phaser.Physics.Matter.Image{
         this.scene.scene.pause();
         this.scene.matter.world.pause();
       }
+      else if (this.currentInteractive instanceof Lever) {
+        this.currentInteractive.activate();
+      }
     }
 }
 
@@ -204,7 +212,7 @@ function PlayerState(){
   this.mana = 100;
   this.charge = 0;
   this.facing = 'r';
-  this.particleSourceX = + 14;
+  this.particleSourceX = + 11;
   this.particleSourceY = - 14;
   this.spell = 'teleport';
 
