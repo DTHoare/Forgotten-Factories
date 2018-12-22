@@ -27,8 +27,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":193.272727272727,
-                 "y":1792.48484848485
+                 "x":191.939393939394,
+                 "y":1806.48484848485
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -50,7 +50,7 @@
                         {
                          "name":"Text",
                          "type":"string",
-                         "value":"Welcome to the tutorial! Stopping to read books is a good idea - they will contain important information about the world, or may even teach you new abilities. These first few books will explain the controls. Press 'space' to jump. Jumping while airbourne costs mana. Press 'Q' to close this book."
+                         "value":"Welcome to the tutorial! Stopping to read books is a good idea - they will contain important information about the world, or may even teach you new abilities. These first few books will explain the controls. Press 'W' to jump. Jumping while airbourne costs mana. Press 'Q' to close this book."
                         }, 
                         {
                          "name":"interact",
@@ -73,7 +73,7 @@
                         {
                          "name":"Text",
                          "type":"string",
-                         "value":"Click and hold to charge a spell and see where it will fly. Release the mouse button to cast. Charged spells goes further and last longer."
+                         "value":"Ledge too high? Cast a teleport spell! Click and hold to charge the spell, and release to cast the spell. Remember, spell orbs are effected by gravity and you will teleport to the first place the orb touches."
                         }, 
                         {
                          "name":"interact",

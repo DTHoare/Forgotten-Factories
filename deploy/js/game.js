@@ -125,6 +125,7 @@ class Player extends Phaser.Physics.Matter.Image{
             if(gameObjectB instanceof Interactive) {
             //if(gameObjectB instanceof Interactive) {
               this.currentInteractive = gameObjectB;
+              this.scene.events.emit('changeTooltip', "Q to read");
             }
           },
           context: this
@@ -149,6 +150,7 @@ class Player extends Phaser.Physics.Matter.Image{
       this.isTouching.right = false;
       this.isTouching.ground = false;
       this.currentInteractive = null;
+      this.scene.events.emit('changeTooltip', "");
     }
 
     generateParticles() {
@@ -214,7 +216,9 @@ class Player extends Phaser.Physics.Matter.Image{
         //var text = this.scene.add.bitmapText(this.x,this.y + 100, 'editundo', this.currentInteractive.formattedText);
         game.scene.add('BookScene', Scene_book, true, {text: this.currentInteractive.formattedText});
         game.scene.start('BookScene');
+        this.scene.events.emit('changeTooltip', "Q to close");
         this.scene.scene.pause();
+        this.scene.matter.world.pause();
       }
     }
 }
@@ -411,15 +415,20 @@ class Scene_book extends Phaser.Scene {
       this.text = this.sys.settings.data["text"];
       this.textToPages();
       this.add.image(480, 400, 'book');
-      var booktextL = this.add.bitmapText(100, 180, 'editundo', this.textLeft);
+      var bookLetter = this.add.bitmapText(100, 170, 'editundo', this.textLeft.slice(0,1));
+      console.log(bookLetter)
+      bookLetter.setFontSize(-80);
+
+      bookLetter.setTint(0x000000);
+      var booktextL = this.add.bitmapText(100, 180, 'editundo', "   " + this.textLeft.slice(1,-1));
       booktextL.setTint(0x000000);
       var booktextR = this.add.bitmapText(500, 180, 'editundo', this.textRight);
       booktextR.setTint(0x000000);
 
-      var helpertext = this.add.bitmapText(700, 20, 'editundo', this.helpText);
+      //var helpertext = this.add.bitmapText(700, 20, 'editundo', this.helpText);
 
       //  Grab a reference to the Game Scene
-      var game = this.scene.get('GameScene');
+      //var gameScene = this.scene.get('GameScene');
       this.keyQ = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Q);
 
     }
@@ -428,6 +437,7 @@ class Scene_book extends Phaser.Scene {
 
       if (Phaser.Input.Keyboard.JustDown(this.keyQ)) {
         game.scene.resume('GameScene');
+        game.scene.getScene('GameScene').matter.world.resume();
         //this.scene.stop();
         game.scene.remove('BookScene');
       }
@@ -596,6 +606,7 @@ class Scene_game extends Phaser.Scene {
       this.add.existing(p);
     }
 
+
     var moveForce = 0.005;
     var airForce = 0.004;
 
@@ -714,6 +725,7 @@ class Scene_UI extends Phaser.Scene {
 
         this.manaText;
         this.spellText;
+        this.tooltip;
 
     }
 
@@ -733,15 +745,17 @@ class Scene_UI extends Phaser.Scene {
       this.spellText = this.add.bitmapText(340,20, 'editundo', 'Spell: ' + player.state.spell);
       this.spellText.setTint(0xcf4ed8);
 
-      //  Grab a reference to the Game Scene
-      var ourGame = this.scene.get('GameScene');
+      this.tooltip = this.add.bitmapText(700,20, 'editundo', '');
 
-      //  Listen for events from it
-      // ourGame.events.on('addScore', function () {
-      //
-      //     manaText.setText("Mana: " + player.state.mana);
-      //
-      // }, this);
+      //  Grab a reference to the Game Scene
+      var gameScene = game.scene.getScene('GameScene');
+
+      // Listen for events from it
+      gameScene.events.on('changeTooltip', function (text) {
+
+          this.tooltip.setText(text);
+
+      }, this);
     }
 
     update () {

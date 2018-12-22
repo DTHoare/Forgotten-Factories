@@ -1,3 +1,8 @@
+
+/**
+ * Projectiles are small particles that obey physics but do not interact with
+ *    eachother. They have a limited lifespan.
+ */
 class Projectile extends Phaser.Physics.Matter.Image{
 
   constructor(scene, x, y, texture){
@@ -17,6 +22,10 @@ class Projectile extends Phaser.Physics.Matter.Image{
     this.setBounce(0.8);
   }
 
+
+  /**
+   * update - increase object age, and adjust colour accordinly. Limit speed.
+   */
   update() {
     this.age ++;
     var colorValue = Math.round(255.*(1.- (this.age/this.maxAge)));
@@ -34,6 +43,13 @@ class Projectile extends Phaser.Physics.Matter.Image{
     }
   }
 
+
+  /**
+   * init - set initial velocity of particle
+   *
+   * @param  {type} charge mana used to cast spell
+   * @param  {type} angle  angle to cast spell
+   */
   init(charge, angle) {
     var speed = charge / 4.0;
     this.maxAge = charge;
@@ -42,6 +58,10 @@ class Projectile extends Phaser.Physics.Matter.Image{
   }
 }
 
+
+/**
+ * Extention of projectile used for teleport spell. Dies on collision
+ */
 class Projectile_Teleport extends Projectile{
   constructor(scene, x, y, texture){
     super(scene, x, y, texture);
@@ -63,6 +83,10 @@ class Projectile_Teleport extends Projectile{
 
 }
 
+
+/**
+ * Extension of projectile used for aiming. Does not effect other objects
+ */
 class Projectile_Ghost extends Projectile{
   constructor(scene, x, y, texture){
     super(scene, x, y, texture);
@@ -78,9 +102,10 @@ class Projectile_Ghost extends Projectile{
      this.setCollidesWith([collision_block]);
      this.setMass(0.001);
 
+     //this collision event uses the modified matter engine
+     //this class updates in collisions without updating the object it collides with
      scene.matterCollision.addOnCollideStart({
        objectA: [this],
-       //callback: function() {this.age = this.maxAge+1; objectA.isActive = false;},
        callback: function(eventData) {
          const { bodyB, gameObjectB, pair} = eventData;
          if (pair.gameObjectA === this) {
@@ -104,6 +129,10 @@ class Projectile_Ghost extends Projectile{
   }
 }
 
+/**
+ * Extension of projectile that is used for the bubble spell. Has a long lasting,
+ *     large and massive body that is unaffected by gravity. 
+ */
 class Projectile_Bubble extends Projectile{
   constructor(scene, x, y, texture){
     super(scene, x, y, texture);
