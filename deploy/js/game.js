@@ -90,7 +90,16 @@ class Lever extends Interactive{
    */
   activate() {
     this.setFlipX(!this.flipX);
-    this.scene.events.emit("lever", this.properties["leverKey"]);
+    var moveX = 0;
+    var moveY = 0;
+    if (this.properties["moveX"]) {moveX = this.properties["moveX"];}
+    if (this.properties["moveY"]) {moveY = this.properties["moveY"];}
+    var keys = this.properties["leverKey"].split(" ");
+    for (var i = 0; i < keys.length; i++) {
+      this.scene.events.emit("lever", keys[i], moveX, moveY, this.flipX);
+    }
+
+
   }
 }
 
@@ -283,7 +292,7 @@ class Player extends Phaser.Physics.Matter.Image{
      * Books are read
      */
     interact() {
-      if (this.currentInteractive.properties["interact"] === "book") {
+      if (this.currentInteractive instanceof Book) {
         //var text = this.scene.add.bitmapText(this.x,this.y + 100, 'editundo', this.currentInteractive.formattedText);
         game.scene.add('BookScene', Scene_book, true, {text: this.currentInteractive.formattedText});
         game.scene.start('BookScene');
@@ -972,14 +981,18 @@ class Structure extends Phaser.Physics.Matter.Image{
   constructor(scene, x, y, texture, objectConfig){
     super(scene.matter.world, x, y, texture);
     this.scene = scene;
-    this.setStatic(true);
+
     this.activated = false;
     this.displayWidth = objectConfig["width"];
     this.displayHeight = objectConfig["height"];
 
+    this.setBody({
+      type: "rectangle",
+      width: objectConfig["width"],
+      height: objectConfig["height"]})
+    this.setStatic(true);
+
     this.properties = {};
-    this.properties["moveX"] = 0;
-    this.properties["moveY"] = 0;
 
     for (var i = 0; i < objectConfig.properties.length; i++){
       var key = objectConfig.properties[i];
@@ -989,21 +1002,20 @@ class Structure extends Phaser.Physics.Matter.Image{
     this.setCollisionCategory(collision_block);
     //this.setCollidesWith([collision_block, collision_player]);
 
-    this.scene.events.on("lever", function(key) {
+    this.scene.events.on("lever", function(key, moveX, moveY, flip) {
       if (this.properties["leverKey"] === key) {
-        this.activate();
+        this.activate(moveX, moveY, flip);
       }
     }, this);
   }
 
-  activate() {
-    this.activated = !this.activated;
-    if (this.activated) {
-      this.y += 32 *this.properties["moveY"];
-      this.x += 32 *this.properties["moveX"];
+  activate(moveX, moveY, flip) {
+    if (flip) {
+      this.y += 32 * moveY;
+      this.x += 32 * moveX;
     } else {
-      this.y -= 32 *this.properties["moveY"];
-      this.x -= 32 *this.properties["moveX"];
+      this.y -= 32 * moveY;
+      this.x -= 32 * moveX;
     }
   }
 }

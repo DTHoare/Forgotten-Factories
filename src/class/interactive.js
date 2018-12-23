@@ -90,6 +90,15 @@ class Lever extends Interactive{
    */
   activate() {
     this.setFlipX(!this.flipX);
-    this.scene.events.emit("lever", this.properties["leverKey"]);
+    var moveX = 0;
+    var moveY = 0;
+    if (this.properties["moveX"]) {moveX = this.properties["moveX"];}
+    if (this.properties["moveY"]) {moveY = this.properties["moveY"];}
+    var keys = this.properties["leverKey"].split(" ");
+    for (var i = 0; i < keys.length; i++) {
+      this.scene.events.emit("lever", keys[i], moveX, moveY, this.flipX);
+    }
+
+
   }
 }

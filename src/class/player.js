@@ -187,7 +187,7 @@ class Player extends Phaser.Physics.Matter.Image{
      * Books are read
      */
     interact() {
-      if (this.currentInteractive.properties["interact"] === "book") {
+      if (this.currentInteractive instanceof Book) {
         //var text = this.scene.add.bitmapText(this.x,this.y + 100, 'editundo', this.currentInteractive.formattedText);
         game.scene.add('BookScene', Scene_book, true, {text: this.currentInteractive.formattedText});
         game.scene.start('BookScene');
