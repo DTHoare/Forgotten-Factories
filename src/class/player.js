@@ -32,8 +32,8 @@ class Player extends Phaser.Physics.Matter.Image{
         const mainBody = Bodies.rectangle(0, 0, w * 0.85, h, { chamfer: { radius: 3 } });
         this.sensors = {
           bottom: Bodies.rectangle(0, h * 0.5, w * 0.7, 4, { isSensor: true }),
-          left: Bodies.rectangle(-w * 0.43, 0, 6, h * 0.2, { isSensor: true }),
-          right: Bodies.rectangle(w * 0.43, 0, 6, h * 0.2, { isSensor: true })
+          left: Bodies.rectangle(-w * 0.45, 0, 6, h * 0.2, { isSensor: true }),
+          right: Bodies.rectangle(w * 0.45, 0, 6, h * 0.2, { isSensor: true })
         };
         const compoundBody = Body.create({
           parts: [mainBody, this.sensors.bottom, this.sensors.left, this.sensors.right],

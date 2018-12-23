@@ -73,15 +73,58 @@ class Projectile_Teleport extends Projectile{
          type: 'circle',
          radius: 16
      });
-     this.setCollidesWith([collision_block]);
+     this.setCollidesWith([collision_block,collision_blockPhysical]);
      this.setBounce(0.0);
      this.setTint(0x60fcff);
+     this.fail = false;
 
-     scene.matterCollision.addOnCollideStart({
-       objectA: [this],
-       callback: function() {this.age = this.maxAge+1},
-       context: this
-     });
+     //manually handle collisions as two effects need to happen in order
+     // First: check if colliding with a blockPhysical to set FAIL
+     // Second: apply collision with block and see if teleport happens
+     scene.matter.world.on("collisionstart", function(event) {
+       var thisBody;
+       var otherBody;
+       event.pairs.forEach(pair => {
+         //console.log(pair)
+         if(pair.bodyA === this.body) {
+           thisBody = pair.bodyA
+           otherBody = pair.bodyB
+         } else if(pair.bodyB === this.body) {
+           thisBody = pair.bodyB
+           otherBody = pair.bodyA
+         } else {
+           return;
+         }
+         if (otherBody.collisionFilter.category === collision_blockPhysical) {
+           pair.isActive = false;
+           this.fail = true;
+         }
+       });
+
+       event.pairs.forEach(pair => {
+         if(pair.bodyA === this.body) {
+           thisBody = pair.bodyA
+           otherBody = pair.bodyB
+         } else if(pair.bodyB === this.body) {
+           thisBody = pair.bodyB
+           otherBody = pair.bodyA
+         } else {
+           return;
+         }
+         if(otherBody.collisionFilter.category === collision_block) {
+           //console.log("collide")
+           if(this.fail) {
+             //console.log("spell fail")
+           } else {
+             //console.log("spell success")
+             this.age = this.maxAge +1 ;
+           }
+
+         }
+       });
+     }, this);
+
+     scene.matter.world.on("beforeupdate", function() {this.fail = false;}, this);
   }
 
 }
