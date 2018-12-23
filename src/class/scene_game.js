@@ -85,7 +85,7 @@ class Scene_game extends Phaser.Scene {
       // Tiled origin for its coordinate system is (0, 1), but we want coordinates relative to an
       // origin of (0.5, 0.5)
       var bookBody = this.add
-        .existing(new Book(this, x + width / 2, y - height / 2, "tiles", 40, book));
+        .existing(new Book(this, x, y, "tiles", 40, book));
 
       this.books[this.books.length] = bookBody;
     });
@@ -93,13 +93,13 @@ class Scene_game extends Phaser.Scene {
     map.getObjectLayer("levers").objects.forEach(lever => {
       const { x, y, width, height } = lever;
       var leverBody = this.add
-        .existing(new Lever(this, x + width / 2, y - height / 2, "tiles", 41, lever));
+        .existing(new Lever(this, x, y, "tiles", 41, lever));
     });
 
     map.getObjectLayer("doors").objects.forEach(door => {
       const { x, y, width, height } = door;
       var doorBody = this.add
-        .existing(new Structure(this, x + width / 2, y + height / 2, "door", door));
+        .existing(new Structure(this, x, y, "door", door));
 
     });
 
@@ -191,7 +191,6 @@ class Scene_game extends Phaser.Scene {
         for (var i = 0; i < 15; i++) {
 
           this.trail[this.trail.length] = this.add.image(projectile.x, projectile.y, 'projectile_large');
-          this.trail[this.trail.length-1].setScale(4)
           this.trail[this.trail.length-1].setTint(0x60fcff);
           this.trail[this.trail.length-1].setAlpha(1 - i/14.);
 

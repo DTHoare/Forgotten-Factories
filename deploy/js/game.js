@@ -13,7 +13,10 @@ class Interactive extends Phaser.Physics.Matter.Image{
    * @param  {type} id      tile id to use from texture
    */
   constructor(scene, x, y, texture, id, objectConfig){
+      x = x + (objectConfig.width / 2)*Math.cos(objectConfig.rotation*Math.PI/180.);
+      y = y - (objectConfig.height / 2)*Math.cos(objectConfig.rotation*Math.PI/180.);
       super(scene.matter.world, x, y, texture, id);
+      this.setAngle(objectConfig.rotation);
       this.scene = scene;
       this.properties = {};
       this.setStatic(true);
@@ -44,7 +47,7 @@ class Book extends Interactive{
    */
   format() {
     if(this.properties["text"]) {
-      this.formattedText = this.addLineBreaks(this.properties["text"], 28);
+      this.formattedText = this.addLineBreaks(this.properties["text"], 25);
     }
   }
 
@@ -442,7 +445,7 @@ class Projectile extends Phaser.Physics.Matter.Image{
    */
   init(charge, angle) {
     var speed = charge / 4.0;
-    this.maxAge = charge;
+    this.maxAge = charge * 1.3;
     this.setVelocityX(speed*Math.cos(angle));
     this.setVelocityY(speed*Math.sin(angle));
   }
@@ -455,7 +458,7 @@ class Projectile extends Phaser.Physics.Matter.Image{
 class Projectile_Teleport extends Projectile{
   constructor(scene, x, y, texture){
     super(scene, x, y, texture);
-    this.maxAge = 100;
+    this.maxAge = 140;
     this.maxVelocity = 20.;
     this.setBody({
          type: 'circle',
@@ -622,7 +625,7 @@ class Scene_book extends Phaser.Scene {
     textToPages() {
       const split = this.text.split(/\n|\r/g);
       let pages = [];
-      var maxLines = 8;
+      var maxLines = 10;
 
       function nextLine() {
         let newPage = "";
@@ -769,7 +772,7 @@ class Scene_game extends Phaser.Scene {
       // Tiled origin for its coordinate system is (0, 1), but we want coordinates relative to an
       // origin of (0.5, 0.5)
       var bookBody = this.add
-        .existing(new Book(this, x + width / 2, y - height / 2, "tiles", 40, book));
+        .existing(new Book(this, x, y, "tiles", 40, book));
 
       this.books[this.books.length] = bookBody;
     });
@@ -777,13 +780,13 @@ class Scene_game extends Phaser.Scene {
     map.getObjectLayer("levers").objects.forEach(lever => {
       const { x, y, width, height } = lever;
       var leverBody = this.add
-        .existing(new Lever(this, x + width / 2, y - height / 2, "tiles", 41, lever));
+        .existing(new Lever(this, x, y, "tiles", 41, lever));
     });
 
     map.getObjectLayer("doors").objects.forEach(door => {
       const { x, y, width, height } = door;
       var doorBody = this.add
-        .existing(new Structure(this, x + width / 2, y + height / 2, "door", door));
+        .existing(new Structure(this, x, y, "door", door));
 
     });
 
@@ -875,7 +878,6 @@ class Scene_game extends Phaser.Scene {
         for (var i = 0; i < 15; i++) {
 
           this.trail[this.trail.length] = this.add.image(projectile.x, projectile.y, 'projectile_large');
-          this.trail[this.trail.length-1].setScale(4)
           this.trail[this.trail.length-1].setTint(0x60fcff);
           this.trail[this.trail.length-1].setAlpha(1 - i/14.);
 
@@ -1081,6 +1083,8 @@ class Scene_UI extends Phaser.Scene {
 class Structure extends Phaser.Physics.Matter.Image{
 
   constructor(scene, x, y, texture, objectConfig){
+    x = x + (objectConfig.width / 2)*Math.cos(objectConfig.rotation*Math.PI/180.);
+    y = y + (objectConfig.height / 2)*Math.cos(objectConfig.rotation*Math.PI/180.);
     super(scene.matter.world, x, y, texture);
     this.scene = scene;
 

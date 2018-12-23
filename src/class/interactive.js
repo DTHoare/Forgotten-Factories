@@ -13,7 +13,10 @@ class Interactive extends Phaser.Physics.Matter.Image{
    * @param  {type} id      tile id to use from texture
    */
   constructor(scene, x, y, texture, id, objectConfig){
+      x = x + (objectConfig.width / 2)*Math.cos(objectConfig.rotation*Math.PI/180.);
+      y = y - (objectConfig.height / 2)*Math.cos(objectConfig.rotation*Math.PI/180.);
       super(scene.matter.world, x, y, texture, id);
+      this.setAngle(objectConfig.rotation);
       this.scene = scene;
       this.properties = {};
       this.setStatic(true);
@@ -44,7 +47,7 @@ class Book extends Interactive{
    */
   format() {
     if(this.properties["text"]) {
-      this.formattedText = this.addLineBreaks(this.properties["text"], 28);
+      this.formattedText = this.addLineBreaks(this.properties["text"], 25);
     }
   }
 

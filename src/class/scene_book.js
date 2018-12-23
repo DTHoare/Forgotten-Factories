@@ -20,7 +20,7 @@ class Scene_book extends Phaser.Scene {
     textToPages() {
       const split = this.text.split(/\n|\r/g);
       let pages = [];
-      var maxLines = 8;
+      var maxLines = 10;
 
       function nextLine() {
         let newPage = "";

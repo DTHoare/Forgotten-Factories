@@ -54,7 +54,7 @@ class Projectile extends Phaser.Physics.Matter.Image{
    */
   init(charge, angle) {
     var speed = charge / 4.0;
-    this.maxAge = charge;
+    this.maxAge = charge * 1.3;
     this.setVelocityX(speed*Math.cos(angle));
     this.setVelocityY(speed*Math.sin(angle));
   }
@@ -67,7 +67,7 @@ class Projectile extends Phaser.Physics.Matter.Image{
 class Projectile_Teleport extends Projectile{
   constructor(scene, x, y, texture){
     super(scene, x, y, texture);
-    this.maxAge = 100;
+    this.maxAge = 140;
     this.maxVelocity = 20.;
     this.setBody({
          type: 'circle',
