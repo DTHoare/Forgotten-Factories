@@ -18,6 +18,7 @@ class Interactive extends Phaser.Physics.Matter.Image{
       this.properties = {};
       this.setStatic(true);
       this.body.isSensor = true;
+      this.identity = x.toString() + " " + y.toString()
 
       for (var i = 0; i < objectConfig.properties.length; i++){
         var key = objectConfig.properties[i];
@@ -82,6 +83,38 @@ class Lever extends Interactive{
 
   constructor(scene, x, y, texture, id, objectConfig){
       super(scene, x, y, texture, id, objectConfig);
+
+      this.isCancelled = false;
+
+      //check for whether lever cannot be pulled
+      this.scene.events.on("cancelLever", function(lever, key) {
+        var check;
+
+        //listen for other levers? Useful for linked levers
+        if (!this.properties["listen"]) {
+          check = this === lever;
+        } else {
+          check = this.properties["leverKey"].split(" ").includes(key);
+        }
+        //cancel the lever
+        if(check && this.isCancelled === false) {
+          this.setFlipX(!this.flipX);
+          this.isCancelled = true;
+        }
+      }, this)
+
+      this.scene.events.on("update", function() {this.isCancelled=false;}, this);
+
+      //if levers are linked, they must listen for each others events
+      if(this.properties["listen"]) {
+        this.scene.events.on("lever", function(key, mx, my, lever) {
+          if (this === lever) {
+            return 0;
+          } else {
+            this.setFlipX(!this.flipX);
+          }
+        }, this)
+      }
   }
 
 
@@ -90,13 +123,15 @@ class Lever extends Interactive{
    */
   activate() {
     this.setFlipX(!this.flipX);
-    var moveX = 0;
-    var moveY = 0;
+    var moveX = "0";
+    var moveY = "0";
     if (this.properties["moveX"]) {moveX = this.properties["moveX"];}
     if (this.properties["moveY"]) {moveY = this.properties["moveY"];}
     var keys = this.properties["leverKey"].split(" ");
+    var mx = moveX.split(" ");
+    var my = moveY.split(" ");
     for (var i = 0; i < keys.length; i++) {
-      this.scene.events.emit("lever", keys[i], moveX, moveY, this.flipX);
+      this.scene.events.emit("lever", keys[i], parseFloat(mx[i % mx.length]), parseFloat(my[i % my.length]), this);
     }
 
 

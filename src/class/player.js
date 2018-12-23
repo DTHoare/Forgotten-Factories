@@ -196,6 +196,7 @@ class Player extends Phaser.Physics.Matter.Image{
         this.scene.matter.world.pause();
       }
       else if (this.currentInteractive instanceof Lever) {
+        //console.log("pull lever")
         this.currentInteractive.activate();
       }
     }
