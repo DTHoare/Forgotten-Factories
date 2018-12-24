@@ -58,6 +58,10 @@ class Scene_game extends Phaser.Scene {
     barLayer.setCollisionByProperty({ collides: true });
     this.matter.world.convertTilemapLayer(barLayer);
 
+    var sceneryLayer = map.createDynamicLayer('scenery', tiles, 0, 0);
+    //sceneryLayer.setCollisionByProperty({ collides: true });
+    this.matter.world.convertTilemapLayer(sceneryLayer);
+
     //set collision properties based on tiled properties
     groundLayer.forEachTile(tile => {
       if (tile.properties.collides && tile.properties.magicCollides) {

@@ -186,6 +186,8 @@ class Projectile_Bubble extends Projectile{
     this.age = 0;
     this.maxAge = 450;
     this.maxVelocity = 20.;
+    this.displayWidth = 86
+    this.displayHeight = 56
     this.setBody({
          type: 'rectangle',
          width: 76,
@@ -198,6 +200,7 @@ class Projectile_Bubble extends Projectile{
          chamfer: 28,
          inertia: 12000
      });
+
      this.setCollisionCategory(collision_block);
      //this.setCollidesWith([collision_block, collision_player, collision_particle]);
      this.setBounce(0.0);

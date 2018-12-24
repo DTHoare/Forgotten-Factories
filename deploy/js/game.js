@@ -47,7 +47,7 @@ class Book extends Interactive{
    */
   format() {
     if(this.properties["text"]) {
-      this.formattedText = this.addLineBreaks(this.properties["text"], 25);
+      this.formattedText = this.addLineBreaks(this.properties["text"], 27);
     }
   }
 
@@ -113,7 +113,7 @@ class Lever extends Interactive{
         this.scene.events.on("lever", function(key, mx, my, lever) {
           if (this === lever) {
             return 0;
-          } else {
+          } else if (this.properties["leverKey"].split(" ").includes(key)) {
             this.setFlipX(!this.flipX);
           }
         }, this)
@@ -577,6 +577,8 @@ class Projectile_Bubble extends Projectile{
     this.age = 0;
     this.maxAge = 450;
     this.maxVelocity = 20.;
+    this.displayWidth = 86
+    this.displayHeight = 56
     this.setBody({
          type: 'rectangle',
          width: 76,
@@ -589,6 +591,7 @@ class Projectile_Bubble extends Projectile{
          chamfer: 28,
          inertia: 12000
      });
+
      this.setCollisionCategory(collision_block);
      //this.setCollidesWith([collision_block, collision_player, collision_particle]);
      this.setBounce(0.0);
@@ -744,6 +747,10 @@ class Scene_game extends Phaser.Scene {
     var barLayer = map.createDynamicLayer('bars', tiles, 0, 0);
     barLayer.setCollisionByProperty({ collides: true });
     this.matter.world.convertTilemapLayer(barLayer);
+
+    var sceneryLayer = map.createDynamicLayer('scenery', tiles, 0, 0);
+    //sceneryLayer.setCollisionByProperty({ collides: true });
+    this.matter.world.convertTilemapLayer(sceneryLayer);
 
     //set collision properties based on tiled properties
     groundLayer.forEachTile(tile => {
@@ -1045,33 +1052,43 @@ class Scene_UI extends Phaser.Scene {
       var text = this.add.bitmapText(20,20, 'editundo', 'Mage Cage');
       text.setTint(0xcf4ed8);
 
-      this.manaText = this.add.bitmapText(200,20, 'editundo', 'Mana: ' + player.state.mana);
+      this.manaText = this.add.bitmapText(200,20, 'editundo', 'Mana: ');
       this.manaText.setTint(0xcf4ed8);
 
-      this.spellText = this.add.bitmapText(340,20, 'editundo', 'Spell: ' + player.state.spell);
+      this.spellText = this.add.bitmapText(340,20, 'editundo', 'Spell: ');
       this.spellText.setTint(0xcf4ed8);
 
       this.tooltip = this.add.bitmapText(700,20, 'editundo', '');
 
       //  Grab a reference to the Game Scene
-      var gameScene = game.scene.getScene('GameScene');
+      this.gameScene = game.scene.getScene('GameScene');
 
       // Listen to events to change the tooltip
-      gameScene.events.on('changeTooltip', function (text) {
+      this.gameScene.events.on('changeTooltip', function (text) {
 
           this.tooltip.setText(text);
 
       }, this);
+
+
     }
 
 
     /**
-     * update - each tick spellText and mana are updated    
+     * update - each tick spellText and mana are updated
      *
      */
     update () {
       this.manaText.setText("Mana: " + player.state.mana);
       this.spellText.setText("Spell: " + player.state.spell);
+
+      //for some reason this fixes the text rendering bug in debug mode...
+      // but introduces new bug in books?
+      //let render = this.gameScene.add.graphics();
+      //let bounds = this.spellText.getTextBounds();
+      //
+      //render.lineStyle(3, 0xffff37);
+      //render.strokeRectShape(bounds["global"]);
 
     }
 }
@@ -1183,7 +1200,7 @@ var config = {
               x: 0,
               y: 2
           },
-          debug : true
+          debug : false
       }
    },
    plugins: {

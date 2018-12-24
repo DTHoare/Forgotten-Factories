@@ -47,7 +47,7 @@ class Book extends Interactive{
    */
   format() {
     if(this.properties["text"]) {
-      this.formattedText = this.addLineBreaks(this.properties["text"], 25);
+      this.formattedText = this.addLineBreaks(this.properties["text"], 27);
     }
   }
 
@@ -113,7 +113,7 @@ class Lever extends Interactive{
         this.scene.events.on("lever", function(key, mx, my, lever) {
           if (this === lever) {
             return 0;
-          } else {
+          } else if (this.properties["leverKey"].split(" ").includes(key)) {
             this.setFlipX(!this.flipX);
           }
         }, this)

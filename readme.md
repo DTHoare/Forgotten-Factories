@@ -8,7 +8,7 @@
 
 ## Known issues:
 
-* at high speeds can pass through single tiles
+* running in debug mode has issues with bitmap texts
 
 ## Features:
 
@@ -23,12 +23,18 @@
 * matter.js modified to allow for one-sided collisions
 * low agility character - spells are more controllable and agile
 
+#### environment
+
+* multiple tile types
+* levers and doors
+* books to read
+* lifts and moving platforms
+
 ## TODO:
 
+* harmful tiles 
+* checkpoints
 * more Spells
-* complete demo level
-* multiple tile types
-* level interaction
 * narrative
 * menu system/UI upgrade
 * sound
