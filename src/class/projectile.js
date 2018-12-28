@@ -73,6 +73,7 @@ class Projectile_Teleport extends Projectile{
          type: 'circle',
          radius: 16
      });
+     this.setCollisionCategory([collision_ghost])
      this.setCollidesWith([collision_block,collision_blockPhysical]);
      this.setBounce(0.0);
      this.setTint(0x60fcff);
@@ -133,18 +134,14 @@ class Projectile_Teleport extends Projectile{
 /**
  * Extension of projectile used for aiming. Does not effect other objects
  */
-class Projectile_Ghost extends Projectile{
+
+class Particle_ghost extends Projectile{
   constructor(scene, x, y, texture){
     super(scene, x, y, texture);
     this.scene = scene
-    this.age = 30;
-    this.maxAge = 5000;
+    this.age = 0;
+    this.maxAge = 50;
     this.maxVelocity = 20.;
-    this.setBody({
-         type: 'circle',
-         radius: 16},
-         {restitution: 1,
-     });
      this.setCollisionCategory(collision_ghost);
      this.setCollidesWith([collision_block]);
      this.setMass(0.001);
@@ -164,6 +161,24 @@ class Projectile_Ghost extends Projectile{
        },
        context: this
      });
+   }
+}
+
+class Projectile_Ghost extends Particle_ghost{
+  constructor(scene, x, y, texture){
+    super(scene, x, y, texture);
+    this.scene = scene
+    this.age = 30;
+    this.maxAge = 5000;
+    this.maxVelocity = 20.;
+    this.setBody({
+         type: 'circle',
+         radius: 16},
+         {restitution: 1,
+     });
+     this.setCollisionCategory(collision_ghost);
+     this.setCollidesWith([collision_block]);
+     this.setMass(0.001);
   }
 
   update() {
@@ -181,36 +196,80 @@ class Projectile_Ghost extends Projectile{
  *     large and massive body that is unaffected by gravity.
  */
 class Projectile_Bubble extends Projectile{
-  constructor(scene, x, y, texture){
+  constructor(scene, x, y, texture, charge){
     super(scene, x, y, texture);
     this.age = 0;
-    this.maxAge = 450;
+    this.maxAge = 650;
     this.maxVelocity = 20.;
-    this.displayWidth = 86
-    this.displayHeight = 56
+    this.touching = false;
+    this.displayWidth = charge * 0.8;
+    this.displayHeight = charge * 0.5;
     this.setBody({
          type: 'rectangle',
-         width: 76,
-         height: 46
+         width: this.displayWidth,
+         height: this.displayHeight
        }, {
-         friction: 0.8,
-         frictionAir: 0.08,
-         frictionStatic: 0.8,
-         mass: 100,
+         friction: 0.9,
+         frictionAir: 0.2,
+         frictionStatic: 0.9,
+         mass: 140,
          chamfer: 28,
-         inertia: 12000
+         inertia: 21000
      });
 
      this.setCollisionCategory(collision_block);
-     //this.setCollidesWith([collision_block, collision_player, collision_particle]);
+     this.setCollidesWith([collision_block, collision_player, collision_particle,collision_ghost]);
      this.setBounce(0.0);
      this.setIgnoreGravity(true);
 
   }
 
   init(charge, angle) {
-    var speed = charge / 4.0;
-    this.setVelocityX(speed*Math.cos(angle));
-    this.setVelocityY(speed*Math.sin(angle));
+    // var speed = charge / 4.0;
+    // this.setVelocityX(speed*Math.cos(angle));
+    // this.setVelocityY(speed*Math.sin(angle));
   }
+}
+
+class Projectile_Bubble_Ghost extends Projectile_Bubble{
+  constructor(scene, x, y, texture, charge){
+    super(scene, x, y, texture, charge);
+    this.touching = false;
+    this.body.isSensor = true;
+    this.setCollidesWith([collision_block, collision_player, collision_particle]);
+
+     scene.matterCollision.addOnCollideStart({
+       objectA: [this],
+       callback: function(eventData) {
+         const { bodyB, gameObjectB, pair} = eventData;
+         if ( (bodyB.collisionFilter.category & collision_ghost) === 0) {
+           this.touching = true;
+           this.touchTint();
+        }
+      },
+       context: this
+     });
+
+     scene.matter.world.on("beforeupdate", function() {this.touching=false}, this);
+
+  }
+
+  touchTint() {
+    if(this.touching) {
+      this.setTint(0x960638);
+    } else {
+      this.setTint(0x60fcff);
+    }
+  }
+
+  init(charge, angle) {
+    // var speed = charge / 4.0;
+    // this.setVelocityX(speed*Math.cos(angle));
+    // this.setVelocityY(speed*Math.sin(angle));
+  }
+
+  update() {
+    //override and do nothing
+  }
+
 }

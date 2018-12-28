@@ -21,6 +21,8 @@ class Interactive extends Phaser.Physics.Matter.Image{
       this.properties = {};
       this.setStatic(true);
       this.body.isSensor = true;
+      this.setCollisionCategory(collision_interactive);
+      this.setCollidesWith([collision_player]);
       this.identity = x.toString() + " " + y.toString()
 
       for (var i = 0; i < objectConfig.properties.length; i++){
@@ -163,8 +165,8 @@ class Player extends Phaser.Physics.Matter.Image{
         super(scene.matter.world, x, y, texture);
         this.scene = scene;
         this.state = new PlayerState();
-        this.setCollisionCategory(collision_player);
-        this.setCollidesWith([collision_block, collision_blockPhysical, collision_interactive]);
+        //this.setCollisionCategory(collision_player);
+        //this.setCollidesWith([collision_block, collision_blockPhysical, collision_interactive]);
         this.currentInteractive = null;
 
         //get the matter body functions
@@ -189,7 +191,10 @@ class Player extends Phaser.Physics.Matter.Image{
           .setScale(1)
           .setFixedRotation() // Sets inertia to infinity so the player can't rotate
           .setPosition(x, y)
-          .setBounce(0.2);
+          .setBounce(0.2)
+
+        this.setCollisionCategory(collision_player)
+        this.setCollidesWith([collision_block, collision_blockPhysical, collision_interactive]);
 
         //reset collision information each tick
         this.isTouching = { left: false, right: false, ground: false };
@@ -257,7 +262,7 @@ class Player extends Phaser.Physics.Matter.Image{
     generateParticles() {
       if(this.state.charging) {
         var angle = Math.random() * 2 * Math.PI;
-        var p = new Projectile(this.world, this.x+this.state.particleSourceX, this.y+this.state.particleSourceY, 'projectile')
+        var p = new Particle_ghost(this.scene, this.x+this.state.particleSourceX, this.y+this.state.particleSourceY, 'projectile')
         p.setVelocityX(5*Math.cos(angle));
         p.setVelocityY(5*Math.sin(angle));
         p.maxAge = 25;
@@ -274,11 +279,11 @@ class Player extends Phaser.Physics.Matter.Image{
     jumpParticles() {
       for (var i = 0; i < 30; i++) {
         var angle = Math.PI/30. * (i-15) + Math.PI + Math.atan2(this.body.velocity.y, this.body.velocity.x);
-        var p = new Projectile(this.world, this.x, this.y+14, 'projectile')
+        var p = new Particle_ghost(this.scene, this.x, this.y+14, 'projectile')
         p.setVelocityX(5*Math.cos(angle));
         p.setVelocityY(5*Math.sin(angle));
         p.maxAge = 25;
-        p.setCollisionCategory(collision_particle);
+        //p.setCollisionCategory(collision_particle);
         particles[particles.length] = p;
         this.scene.add.existing(p);
       }
@@ -369,6 +374,7 @@ function PlayerState(){
     this.charging = false;
     this.manaRegen = true;
     this.charge = 0;
+    this.mana = 100;
   }
 
   this.updateMana = function() {
@@ -464,6 +470,7 @@ class Projectile_Teleport extends Projectile{
          type: 'circle',
          radius: 16
      });
+     this.setCollisionCategory([collision_ghost])
      this.setCollidesWith([collision_block,collision_blockPhysical]);
      this.setBounce(0.0);
      this.setTint(0x60fcff);
@@ -524,18 +531,14 @@ class Projectile_Teleport extends Projectile{
 /**
  * Extension of projectile used for aiming. Does not effect other objects
  */
-class Projectile_Ghost extends Projectile{
+
+class Particle_ghost extends Projectile{
   constructor(scene, x, y, texture){
     super(scene, x, y, texture);
     this.scene = scene
-    this.age = 30;
-    this.maxAge = 5000;
+    this.age = 0;
+    this.maxAge = 50;
     this.maxVelocity = 20.;
-    this.setBody({
-         type: 'circle',
-         radius: 16},
-         {restitution: 1,
-     });
      this.setCollisionCategory(collision_ghost);
      this.setCollidesWith([collision_block]);
      this.setMass(0.001);
@@ -555,6 +558,24 @@ class Projectile_Ghost extends Projectile{
        },
        context: this
      });
+   }
+}
+
+class Projectile_Ghost extends Particle_ghost{
+  constructor(scene, x, y, texture){
+    super(scene, x, y, texture);
+    this.scene = scene
+    this.age = 30;
+    this.maxAge = 5000;
+    this.maxVelocity = 20.;
+    this.setBody({
+         type: 'circle',
+         radius: 16},
+         {restitution: 1,
+     });
+     this.setCollisionCategory(collision_ghost);
+     this.setCollidesWith([collision_block]);
+     this.setMass(0.001);
   }
 
   update() {
@@ -572,38 +593,82 @@ class Projectile_Ghost extends Projectile{
  *     large and massive body that is unaffected by gravity.
  */
 class Projectile_Bubble extends Projectile{
-  constructor(scene, x, y, texture){
+  constructor(scene, x, y, texture, charge){
     super(scene, x, y, texture);
     this.age = 0;
-    this.maxAge = 450;
+    this.maxAge = 650;
     this.maxVelocity = 20.;
-    this.displayWidth = 86
-    this.displayHeight = 56
+    this.touching = false;
+    this.displayWidth = charge * 0.8;
+    this.displayHeight = charge * 0.5;
     this.setBody({
          type: 'rectangle',
-         width: 76,
-         height: 46
+         width: this.displayWidth,
+         height: this.displayHeight
        }, {
-         friction: 0.8,
-         frictionAir: 0.08,
-         frictionStatic: 0.8,
-         mass: 100,
+         friction: 0.9,
+         frictionAir: 0.2,
+         frictionStatic: 0.9,
+         mass: 140,
          chamfer: 28,
-         inertia: 12000
+         inertia: 21000
      });
 
      this.setCollisionCategory(collision_block);
-     //this.setCollidesWith([collision_block, collision_player, collision_particle]);
+     this.setCollidesWith([collision_block, collision_player, collision_particle,collision_ghost]);
      this.setBounce(0.0);
      this.setIgnoreGravity(true);
 
   }
 
   init(charge, angle) {
-    var speed = charge / 4.0;
-    this.setVelocityX(speed*Math.cos(angle));
-    this.setVelocityY(speed*Math.sin(angle));
+    // var speed = charge / 4.0;
+    // this.setVelocityX(speed*Math.cos(angle));
+    // this.setVelocityY(speed*Math.sin(angle));
   }
+}
+
+class Projectile_Bubble_Ghost extends Projectile_Bubble{
+  constructor(scene, x, y, texture, charge){
+    super(scene, x, y, texture, charge);
+    this.touching = false;
+    this.body.isSensor = true;
+    this.setCollidesWith([collision_block, collision_player, collision_particle]);
+
+     scene.matterCollision.addOnCollideStart({
+       objectA: [this],
+       callback: function(eventData) {
+         const { bodyB, gameObjectB, pair} = eventData;
+         if ( (bodyB.collisionFilter.category & collision_ghost) === 0) {
+           this.touching = true;
+           this.touchTint();
+        }
+      },
+       context: this
+     });
+
+     scene.matter.world.on("beforeupdate", function() {this.touching=false}, this);
+
+  }
+
+  touchTint() {
+    if(this.touching) {
+      this.setTint(0x960638);
+    } else {
+      this.setTint(0x60fcff);
+    }
+  }
+
+  init(charge, angle) {
+    // var speed = charge / 4.0;
+    // this.setVelocityX(speed*Math.cos(angle));
+    // this.setVelocityY(speed*Math.sin(angle));
+  }
+
+  update() {
+    //override and do nothing
+  }
+
 }
 
 
@@ -717,6 +782,7 @@ class Scene_game extends Phaser.Scene {
     this.load.image('platformTile', 'assets/platform_placeholder.png');
     this.load.image('projectile', 'assets/projectile_placeholder.png');
     this.load.image('projectile_large', 'assets/projectile_large_placeholder.png');
+    this.load.image('bubble', 'assets/bubble_placeholder.png');
     this.load.image('door', 'assets/door_placeholder.png');
 
     // map made with Tiled in JSON format
@@ -732,6 +798,7 @@ class Scene_game extends Phaser.Scene {
     collision_particle = this.matter.world.nextCategory();
     collision_ghost = this.matter.world.nextCategory();
     collision_blockPhysical = this.matter.world.nextCategory();
+    collision_interactive = this.matter.world.nextCategory();
 
     // load the map
     var map = this.make.tilemap({key: 'map'});
@@ -818,6 +885,63 @@ class Scene_game extends Phaser.Scene {
     this.keyQ = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Q);
     this.keySpace = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
+    /**
+     * On preupdate make target for bubble spell appear - so that it can collide before spell cast event
+     */
+    this.events.on("preupdate", function () {
+      for (var i = this.trail.length-1; i >= 0; i--) {
+        this.trail[i].destroy();
+        this.trail.splice(i,1);
+      }
+      //it seems just up and is down fire seperately per loop
+      if (game.input.activePointer.isDown || game.input.activePointer.justUp) {
+        player.state.startCharge();
+
+        //add new ghost projectile
+        var pointer = game.input.activePointer;
+        if (player.state.spell === "bubble") {
+          var projectile = this.add.existing( new Projectile_Bubble_Ghost(this, pointer.x + this.cameras.main.scrollX, pointer.y + this.cameras.main.scrollY, 'bubble',player.state.charge) );
+          this.trail[this.trail.length] = projectile;
+        }
+      }
+    }, this);
+
+    this.events.on('update', function () {
+      if (game.input.activePointer.isDown) {
+        player.state.startCharge();
+
+        //add new ghost projectile
+        var pointer = game.input.activePointer;
+        if (player.state.spell === "teleport") {
+          var angle = Phaser.Math.Angle.Between(player.x, player.y, pointer.x + this.cameras.main.scrollX, pointer.y + this.cameras.main.scrollY);
+          var projectile = this.add.existing( new Projectile_Ghost(this, player.x+player.state.particleSourceX, player.y+player.state.particleSourceY, 'projectile_large') );
+          projectile.init(player.state.charge, angle);
+          projectile.maxAge = 50;
+
+          for (var i = 0; i < 15; i++) {
+
+            this.trail[this.trail.length] = this.add.image(projectile.x, projectile.y, 'projectile_large');
+            this.trail[this.trail.length-1].setTint(0x60fcff);
+            this.trail[this.trail.length-1].setAlpha(1 - i/14.);
+
+            projectile.body.force.y = projectile.body.mass * 2 * 0.001;
+
+            Phaser.Physics.Matter.Matter.Body.update(projectile.body, 16.67, 1, 1);
+            projectile.limitSpeed();
+          }
+          projectile.destroy();
+        }
+
+        //change player direction to face the cursor for aiming
+        var direction;
+        if ( (pointer.x + this.cameras.main.scrollX) > player.x) {
+          direction = 'r';
+        } else {
+          direction = 'l';
+        }
+        player.faceDirection(direction);
+      }
+    }, this);
 
     /**
      * Event for when charging ends
@@ -842,8 +966,11 @@ class Scene_game extends Phaser.Scene {
           var projectile = this.add.existing( new Projectile_Teleport(this, player.x+player.state.particleSourceX, player.y+player.state.particleSourceY, 'player') );
           this.focusObject(projectile);
           this.focus = projectile;
+        } else if (player.state.spell === "bubble" && !this.trail[0].touching){
+          var projectile = this.add.existing( new Projectile_Bubble(this, pointer.x + this.cameras.main.scrollX, pointer.y + this.cameras.main.scrollY, 'bubble',player.state.charge) );
         } else {
-          var projectile = this.add.existing( new Projectile_Bubble(this, player.x+player.state.particleSourceX, player.y+player.state.particleSourceY, 'projectile_large') );
+          player.state.endCharge();
+          return;
         }
         projectile.init(player.state.charge, angle);
         playerProjectiles[playerProjectiles.length] = projectile;
@@ -851,54 +978,6 @@ class Scene_game extends Phaser.Scene {
         player.state.endCharge();
       }
     }, this);
-
-
-    /**
-     * On update event, check if mouse is held down, and if so, keep charging
-     */
-    this.events.on('update', function () {
-      //update trail
-      for (var i = this.trail.length-1; i >= 0; i--) {
-        this.trail[i].destroy();
-        this.trail.splice(i,1);
-      }
-      if (game.input.activePointer.isDown) {
-        player.state.startCharge();
-
-        //add new ghost projectile
-        var pointer = game.input.activePointer;
-        var angle = Phaser.Math.Angle.Between(player.x, player.y, pointer.x + this.cameras.main.scrollX, pointer.y + this.cameras.main.scrollY);
-        var projectile = this.add.existing( new Projectile_Ghost(this, player.x+player.state.particleSourceX, player.y+player.state.particleSourceY, 'projectile_large') );
-        projectile.init(player.state.charge, angle);
-        projectile.maxAge = 50;
-        //playerProjectiles[playerProjectiles.length] = projectile;
-
-        //change player direction to face the cursor for aiming
-        var direction;
-        if ( (pointer.x + this.cameras.main.scrollX) > player.x) {
-          direction = 'r';
-        } else {
-          direction = 'l';
-        }
-        player.faceDirection(direction);
-
-        for (var i = 0; i < 15; i++) {
-
-          this.trail[this.trail.length] = this.add.image(projectile.x, projectile.y, 'projectile_large');
-          this.trail[this.trail.length-1].setTint(0x60fcff);
-          this.trail[this.trail.length-1].setAlpha(1 - i/14.);
-
-          projectile.body.force.y = projectile.body.mass * 2 * 0.001;
-
-          Phaser.Physics.Matter.Matter.Body.update(projectile.body, 16.67, 1, 1);
-          projectile.limitSpeed();
-        }
-
-        projectile.destroy();
-
-      }
-    }, this);
-
 
   }
 
@@ -908,7 +987,7 @@ class Scene_game extends Phaser.Scene {
     //update particles
     var p = player.generateParticles();
     if(p instanceof Projectile) {
-      p.setCollisionCategory(collision_particle);
+      //p.setCollisionCategory(collision_particle);
       particles[particles.length] = p;
       this.add.existing(p);
     }

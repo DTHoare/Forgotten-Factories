@@ -20,8 +20,8 @@ class Player extends Phaser.Physics.Matter.Image{
         super(scene.matter.world, x, y, texture);
         this.scene = scene;
         this.state = new PlayerState();
-        this.setCollisionCategory(collision_player);
-        this.setCollidesWith([collision_block, collision_blockPhysical, collision_interactive]);
+        //this.setCollisionCategory(collision_player);
+        //this.setCollidesWith([collision_block, collision_blockPhysical, collision_interactive]);
         this.currentInteractive = null;
 
         //get the matter body functions
@@ -46,7 +46,10 @@ class Player extends Phaser.Physics.Matter.Image{
           .setScale(1)
           .setFixedRotation() // Sets inertia to infinity so the player can't rotate
           .setPosition(x, y)
-          .setBounce(0.2);
+          .setBounce(0.2)
+
+        this.setCollisionCategory(collision_player)
+        this.setCollidesWith([collision_block, collision_blockPhysical, collision_interactive]);
 
         //reset collision information each tick
         this.isTouching = { left: false, right: false, ground: false };
@@ -114,7 +117,7 @@ class Player extends Phaser.Physics.Matter.Image{
     generateParticles() {
       if(this.state.charging) {
         var angle = Math.random() * 2 * Math.PI;
-        var p = new Projectile(this.world, this.x+this.state.particleSourceX, this.y+this.state.particleSourceY, 'projectile')
+        var p = new Particle_ghost(this.scene, this.x+this.state.particleSourceX, this.y+this.state.particleSourceY, 'projectile')
         p.setVelocityX(5*Math.cos(angle));
         p.setVelocityY(5*Math.sin(angle));
         p.maxAge = 25;
@@ -131,11 +134,11 @@ class Player extends Phaser.Physics.Matter.Image{
     jumpParticles() {
       for (var i = 0; i < 30; i++) {
         var angle = Math.PI/30. * (i-15) + Math.PI + Math.atan2(this.body.velocity.y, this.body.velocity.x);
-        var p = new Projectile(this.world, this.x, this.y+14, 'projectile')
+        var p = new Particle_ghost(this.scene, this.x, this.y+14, 'projectile')
         p.setVelocityX(5*Math.cos(angle));
         p.setVelocityY(5*Math.sin(angle));
         p.maxAge = 25;
-        p.setCollisionCategory(collision_particle);
+        //p.setCollisionCategory(collision_particle);
         particles[particles.length] = p;
         this.scene.add.existing(p);
       }
@@ -226,6 +229,7 @@ function PlayerState(){
     this.charging = false;
     this.manaRegen = true;
     this.charge = 0;
+    this.mana = 100;
   }
 
   this.updateMana = function() {

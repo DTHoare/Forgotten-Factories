@@ -21,6 +21,8 @@ class Interactive extends Phaser.Physics.Matter.Image{
       this.properties = {};
       this.setStatic(true);
       this.body.isSensor = true;
+      this.setCollisionCategory(collision_interactive);
+      this.setCollidesWith([collision_player]);
       this.identity = x.toString() + " " + y.toString()
 
       for (var i = 0; i < objectConfig.properties.length; i++){
