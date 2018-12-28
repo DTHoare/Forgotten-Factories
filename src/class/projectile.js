@@ -67,6 +67,7 @@ class Projectile extends Phaser.Physics.Matter.Image{
 class Projectile_Teleport extends Projectile{
   constructor(scene, x, y, texture){
     super(scene, x, y, texture);
+    this.scene = scene
     this.maxAge = 140;
     this.maxVelocity = 20.;
     this.setBody({
@@ -79,53 +80,73 @@ class Projectile_Teleport extends Projectile{
      this.setTint(0x60fcff);
      this.fail = false;
 
+     this.scene.events.on("shutdown", this.destroy, this);
+     this.scene.events.on("destroy", this.destroy, this);
+
      //manually handle collisions as two effects need to happen in order
      // First: check if colliding with a blockPhysical to set FAIL
      // Second: apply collision with block and see if teleport happens
-     scene.matter.world.on("collisionstart", function(event) {
-       var thisBody;
-       var otherBody;
-       event.pairs.forEach(pair => {
-         //console.log(pair)
-         if(pair.bodyA === this.body) {
-           thisBody = pair.bodyA
-           otherBody = pair.bodyB
-         } else if(pair.bodyB === this.body) {
-           thisBody = pair.bodyB
-           otherBody = pair.bodyA
-         } else {
-           return;
-         }
-         if (otherBody.collisionFilter.category === collision_blockPhysical) {
-           pair.isActive = false;
-           this.fail = true;
-         }
-       });
-
-       event.pairs.forEach(pair => {
-         if(pair.bodyA === this.body) {
-           thisBody = pair.bodyA
-           otherBody = pair.bodyB
-         } else if(pair.bodyB === this.body) {
-           thisBody = pair.bodyB
-           otherBody = pair.bodyA
-         } else {
-           return;
-         }
-         if(otherBody.collisionFilter.category === collision_block) {
-           //console.log("collide")
-           if(this.fail) {
-             //console.log("spell fail")
-           } else {
-             //console.log("spell success")
-             this.age = this.maxAge +1 ;
-           }
-
-         }
-       });
-     }, this);
+     scene.matter.world.on("collisionstart", this.checkCollisions, this);
 
      scene.matter.world.on("beforeupdate", function() {this.fail = false;}, this);
+  }
+
+  checkCollisions(event) {
+    var thisBody;
+    var otherBody;
+    event.pairs.forEach(pair => {
+      //console.log(pair)
+      if(pair.bodyA === this.body) {
+        thisBody = pair.bodyA
+        otherBody = pair.bodyB
+      } else if(pair.bodyB === this.body) {
+        thisBody = pair.bodyB
+        otherBody = pair.bodyA
+      } else {
+        return;
+      }
+      if (otherBody.collisionFilter.category === collision_blockPhysical) {
+        pair.isActive = false;
+        this.fail = true;
+      }
+    });
+
+    console.log(this.fail)
+
+    event.pairs.forEach(pair => {
+      if(pair.bodyA === this.body) {
+        thisBody = pair.bodyA
+        otherBody = pair.bodyB
+      } else if(pair.bodyB === this.body) {
+        thisBody = pair.bodyB
+        otherBody = pair.bodyA
+      } else {
+        return;
+      }
+      if(otherBody.collisionFilter.category === collision_block) {
+        //console.log("collide")
+        if(this.fail) {
+          //console.log("spell fail")
+        } else {
+          console.log("spell success")
+          this.age = this.maxAge +1 ;
+        }
+
+      }
+    });
+  }
+
+  destroy() {
+
+    // Event listeners
+    this.scene.events.off("shutdown", this.destroy, this);
+    this.scene.events.off("destroy", this.destroy, this);
+
+    if (this.scene.matter.world) {
+      this.scene.matter.world.off("collisionstart", this.checkCollisions, this);
+      this.scene.matter.world.off("beforeupdate", function() {this.fail = false;}, this);
+    }
+    super.destroy();
   }
 
 }
@@ -218,7 +239,7 @@ class Projectile_Bubble extends Projectile{
      });
 
      this.setCollisionCategory(collision_block);
-     this.setCollidesWith([collision_block, collision_player, collision_particle,collision_ghost]);
+     this.setCollidesWith([collision_block, collision_player, collision_particle,collision_ghost,collision_blockPhysical]);
      this.setBounce(0.0);
      this.setIgnoreGravity(true);
 
@@ -236,7 +257,7 @@ class Projectile_Bubble_Ghost extends Projectile_Bubble{
     super(scene, x, y, texture, charge);
     this.touching = false;
     this.body.isSensor = true;
-    this.setCollidesWith([collision_block, collision_player, collision_particle]);
+    this.setCollidesWith([collision_block, collision_player, collision_particle, collision_blockPhysical]);
 
      scene.matterCollision.addOnCollideStart({
        objectA: [this],

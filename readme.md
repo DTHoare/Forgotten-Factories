@@ -9,6 +9,8 @@
 ## Known issues:
 
 * running in debug mode has issues with bitmap texts
+* collisions within bodies not always resolved correctly due to slopes
+* elevators are bumpy rides
 
 ## Features:
 
@@ -32,7 +34,7 @@
 
 ## TODO:
 
-* harmful tiles 
+* harmful tiles
 * checkpoints
 * more Spells
 * narrative

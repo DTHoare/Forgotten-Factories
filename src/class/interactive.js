@@ -142,3 +142,22 @@ class Lever extends Interactive{
 
   }
 }
+
+class Goal extends Interactive{
+
+  constructor(scene, x, y, texture, id, objectConfig){
+      super(scene, x, y, texture, id, objectConfig);
+  }
+
+
+  /**
+   * activate -
+   */
+  activate() {
+    console.log("start level: " + this.properties["level"])
+    this.scene.scene.restart({level: this.properties["level"]});
+    //game.scene.add('levelEndScene', Scene_levelEnd, false, {level: this.scene.sys.settings.data.level, nextLevel: this.properties["level"]})
+    //this.scene.scene.start('levelEndScene', {level: this.scene.sys.settings.data.level, nextLevel: this.properties["level"]});
+
+  }
+}

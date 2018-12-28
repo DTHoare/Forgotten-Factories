@@ -43,7 +43,7 @@ class Structure extends Phaser.Physics.Matter.Image{
       }
     }, this);
 
-    this.scene.events.on("update", this.update, this);
+    this.scene.events.on("preupdate", this.update, this);
   }
 
   /**

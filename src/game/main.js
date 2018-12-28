@@ -11,7 +11,7 @@ var config = {
               x: 0,
               y: 2
           },
-          debug : false
+          debug : true
       }
    },
    plugins: {
@@ -21,10 +21,19 @@ var config = {
           mapping: "matterCollision" // Where to store in the Scene, e.g. scene.matterCollision
         }]
     },
-   scene: [ Scene_game, Scene_UI ]
+   scene: [ Scene_game, Scene_UI],
+
+   // callbacks: {
+   //    postBoot() {
+   //      game.scene.add('UIScene', scenes.scene_levelEnd, false);
+   //
+   //      //game.scene.start('SceneA');
+   //    }
+   //  }
 };
 
 var game = new Phaser.Game(config);
+game.scene.add('levelEndScene', Scene_levelEnd, false)
 
 var player;
 var playerProjectiles = [];

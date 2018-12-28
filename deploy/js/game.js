@@ -143,6 +143,25 @@ class Lever extends Interactive{
   }
 }
 
+class Goal extends Interactive{
+
+  constructor(scene, x, y, texture, id, objectConfig){
+      super(scene, x, y, texture, id, objectConfig);
+  }
+
+
+  /**
+   * activate -
+   */
+  activate() {
+    console.log("start level: " + this.properties["level"])
+    this.scene.scene.restart({level: this.properties["level"]});
+    //game.scene.add('levelEndScene', Scene_levelEnd, false, {level: this.scene.sys.settings.data.level, nextLevel: this.properties["level"]})
+    //this.scene.scene.start('levelEndScene', {level: this.scene.sys.settings.data.level, nextLevel: this.properties["level"]});
+
+  }
+}
+
 
 /**
  * The player is the playable character, contains state information and interaction
@@ -224,12 +243,28 @@ class Player extends Phaser.Physics.Matter.Image{
                 this.scene.events.emit('changeTooltip', "Q to read");
               } else if (gameObjectB instanceof Lever) {
                 this.scene.events.emit('changeTooltip', "Q to pull");
+              } else if (gameObjectB instanceof Goal) {
+                this.scene.events.emit('changeTooltip', "Q to finish level")
               }
 
             }
           },
           context: this
         });
+
+        this.scene.events.on("shutdown", this.destroy, this);
+        this.scene.events.on("destroy", this.destroy, this);
+    }
+
+    destroy() {
+      this.destroyed = true;
+      this.scene.events.off("shutdown", this.destroy, this);
+      this.scene.events.off("destroy", this.destroy, this);
+      //this.scene.matter.world.off("beforeupdate", this.reset, this);
+
+      this.scene.matterCollision.removeOnCollideStart({objectA: [this.sensors.bottom, this.sensors.left, this.sensors.right]})
+      this.scene.matterCollision.removeOnCollideActive({objectA: [this.sensors.bottom, this.sensors.left, this.sensors.right]})
+      this.scene.matterCollision.removeOnCollideActive({objectA: this})
     }
 
     onSensorCollide({ bodyA, bodyB, pair }) {
@@ -345,6 +380,9 @@ class Player extends Phaser.Physics.Matter.Image{
       }
       else if (this.currentInteractive instanceof Lever) {
         //console.log("pull lever")
+        this.currentInteractive.activate();
+      }
+      else {
         this.currentInteractive.activate();
       }
     }
@@ -464,6 +502,7 @@ class Projectile extends Phaser.Physics.Matter.Image{
 class Projectile_Teleport extends Projectile{
   constructor(scene, x, y, texture){
     super(scene, x, y, texture);
+    this.scene = scene
     this.maxAge = 140;
     this.maxVelocity = 20.;
     this.setBody({
@@ -476,53 +515,73 @@ class Projectile_Teleport extends Projectile{
      this.setTint(0x60fcff);
      this.fail = false;
 
+     this.scene.events.on("shutdown", this.destroy, this);
+     this.scene.events.on("destroy", this.destroy, this);
+
      //manually handle collisions as two effects need to happen in order
      // First: check if colliding with a blockPhysical to set FAIL
      // Second: apply collision with block and see if teleport happens
-     scene.matter.world.on("collisionstart", function(event) {
-       var thisBody;
-       var otherBody;
-       event.pairs.forEach(pair => {
-         //console.log(pair)
-         if(pair.bodyA === this.body) {
-           thisBody = pair.bodyA
-           otherBody = pair.bodyB
-         } else if(pair.bodyB === this.body) {
-           thisBody = pair.bodyB
-           otherBody = pair.bodyA
-         } else {
-           return;
-         }
-         if (otherBody.collisionFilter.category === collision_blockPhysical) {
-           pair.isActive = false;
-           this.fail = true;
-         }
-       });
-
-       event.pairs.forEach(pair => {
-         if(pair.bodyA === this.body) {
-           thisBody = pair.bodyA
-           otherBody = pair.bodyB
-         } else if(pair.bodyB === this.body) {
-           thisBody = pair.bodyB
-           otherBody = pair.bodyA
-         } else {
-           return;
-         }
-         if(otherBody.collisionFilter.category === collision_block) {
-           //console.log("collide")
-           if(this.fail) {
-             //console.log("spell fail")
-           } else {
-             //console.log("spell success")
-             this.age = this.maxAge +1 ;
-           }
-
-         }
-       });
-     }, this);
+     scene.matter.world.on("collisionstart", this.checkCollisions, this);
 
      scene.matter.world.on("beforeupdate", function() {this.fail = false;}, this);
+  }
+
+  checkCollisions(event) {
+    var thisBody;
+    var otherBody;
+    event.pairs.forEach(pair => {
+      //console.log(pair)
+      if(pair.bodyA === this.body) {
+        thisBody = pair.bodyA
+        otherBody = pair.bodyB
+      } else if(pair.bodyB === this.body) {
+        thisBody = pair.bodyB
+        otherBody = pair.bodyA
+      } else {
+        return;
+      }
+      if (otherBody.collisionFilter.category === collision_blockPhysical) {
+        pair.isActive = false;
+        this.fail = true;
+      }
+    });
+
+    console.log(this.fail)
+
+    event.pairs.forEach(pair => {
+      if(pair.bodyA === this.body) {
+        thisBody = pair.bodyA
+        otherBody = pair.bodyB
+      } else if(pair.bodyB === this.body) {
+        thisBody = pair.bodyB
+        otherBody = pair.bodyA
+      } else {
+        return;
+      }
+      if(otherBody.collisionFilter.category === collision_block) {
+        //console.log("collide")
+        if(this.fail) {
+          //console.log("spell fail")
+        } else {
+          console.log("spell success")
+          this.age = this.maxAge +1 ;
+        }
+
+      }
+    });
+  }
+
+  destroy() {
+
+    // Event listeners
+    this.scene.events.off("shutdown", this.destroy, this);
+    this.scene.events.off("destroy", this.destroy, this);
+
+    if (this.scene.matter.world) {
+      this.scene.matter.world.off("collisionstart", this.checkCollisions, this);
+      this.scene.matter.world.off("beforeupdate", function() {this.fail = false;}, this);
+    }
+    super.destroy();
   }
 
 }
@@ -615,7 +674,7 @@ class Projectile_Bubble extends Projectile{
      });
 
      this.setCollisionCategory(collision_block);
-     this.setCollidesWith([collision_block, collision_player, collision_particle,collision_ghost]);
+     this.setCollidesWith([collision_block, collision_player, collision_particle,collision_ghost,collision_blockPhysical]);
      this.setBounce(0.0);
      this.setIgnoreGravity(true);
 
@@ -633,7 +692,7 @@ class Projectile_Bubble_Ghost extends Projectile_Bubble{
     super(scene, x, y, texture, charge);
     this.touching = false;
     this.body.isSensor = true;
-    this.setCollidesWith([collision_block, collision_player, collision_particle]);
+    this.setCollidesWith([collision_block, collision_player, collision_particle, collision_blockPhysical]);
 
      scene.matterCollision.addOnCollideStart({
        objectA: [this],
@@ -764,6 +823,10 @@ class Scene_game extends Phaser.Scene {
     super('GameScene');
     this.books = [];
     this.trail = [];
+    // if (!this.sys.settings.data.level) {
+    //   this.sys.settings.data.level = 1;
+    // }
+    this.level = "1"
   }
 
   focusPlayer() {
@@ -774,6 +837,13 @@ class Scene_game extends Phaser.Scene {
     this.cameras.main.startFollow(obj, true, 0.5, 0.5, 0, 150);
   }
 
+  init(data) {
+    this.destroyed = false;
+    this.level = data.level
+    if (!data.level) {
+      this.level = "1"
+    }
+  }
 
   preload () {
     this.load.scenePlugin('Slopes', 'js/phaser-slopes.min.js');
@@ -786,12 +856,15 @@ class Scene_game extends Phaser.Scene {
     this.load.image('door', 'assets/door_placeholder.png');
 
     // map made with Tiled in JSON format
-    this.load.tilemapTiledJSON('map', 'assets/maps/demo_level_tutorial.json');
+    this.load.tilemapTiledJSON('map1', 'assets/maps/demo_level_1.json');
+    this.load.tilemapTiledJSON('map2', 'assets/maps/demo_level_tutorial.json');
+
     // tiles in spritesheet
     this.load.spritesheet('tiles', 'assets/maps/tiles_placeholder.png', {frameWidth: 32, frameHeight: 32});
   }
 
   create () {
+    //this.plugins.installScenePlugin('Slopes', 'js/phaser-slopes.min.js', 'slopes');
     //collisions
     collision_player = this.matter.world.nextCategory();
     collision_block = this.matter.world.nextCategory();
@@ -800,8 +873,18 @@ class Scene_game extends Phaser.Scene {
     collision_blockPhysical = this.matter.world.nextCategory();
     collision_interactive = this.matter.world.nextCategory();
 
+    var map;
     // load the map
-    var map = this.make.tilemap({key: 'map'});
+    console.log(this.level)
+    switch (this.level) {
+      case "1":
+        map = this.make.tilemap({key: 'map1'});
+        break;
+      case "2":
+        map = this.make.tilemap({key: 'map2'});
+        break;
+    }
+
 
     // tiles for the ground layer
     var tiles = map.addTilesetImage('Tiles','tiles');
@@ -861,7 +944,12 @@ class Scene_game extends Phaser.Scene {
       const { x, y, width, height } = door;
       var doorBody = this.add
         .existing(new Structure(this, x, y, "door", door));
+    });
 
+    map.getObjectLayer("goals").objects.forEach(goal => {
+      const { x, y, width, height } = goal;
+      var goalBody = this.add
+        .existing(new Goal(this, x, y, "tiles", 42, goal));
     });
 
     // add spawn point and player
@@ -888,100 +976,110 @@ class Scene_game extends Phaser.Scene {
     /**
      * On preupdate make target for bubble spell appear - so that it can collide before spell cast event
      */
-    this.events.on("preupdate", function () {
-      for (var i = this.trail.length-1; i >= 0; i--) {
-        this.trail[i].destroy();
-        this.trail.splice(i,1);
-      }
-      //it seems just up and is down fire seperately per loop
-      if (game.input.activePointer.isDown || game.input.activePointer.justUp) {
-        player.state.startCharge();
-
-        //add new ghost projectile
-        var pointer = game.input.activePointer;
-        if (player.state.spell === "bubble") {
-          var projectile = this.add.existing( new Projectile_Bubble_Ghost(this, pointer.x + this.cameras.main.scrollX, pointer.y + this.cameras.main.scrollY, 'bubble',player.state.charge) );
-          this.trail[this.trail.length] = projectile;
-        }
-      }
-    }, this);
-
-    this.events.on('update', function () {
-      if (game.input.activePointer.isDown) {
-        player.state.startCharge();
-
-        //add new ghost projectile
-        var pointer = game.input.activePointer;
-        if (player.state.spell === "teleport") {
-          var angle = Phaser.Math.Angle.Between(player.x, player.y, pointer.x + this.cameras.main.scrollX, pointer.y + this.cameras.main.scrollY);
-          var projectile = this.add.existing( new Projectile_Ghost(this, player.x+player.state.particleSourceX, player.y+player.state.particleSourceY, 'projectile_large') );
-          projectile.init(player.state.charge, angle);
-          projectile.maxAge = 50;
-
-          for (var i = 0; i < 15; i++) {
-
-            this.trail[this.trail.length] = this.add.image(projectile.x, projectile.y, 'projectile_large');
-            this.trail[this.trail.length-1].setTint(0x60fcff);
-            this.trail[this.trail.length-1].setAlpha(1 - i/14.);
-
-            projectile.body.force.y = projectile.body.mass * 2 * 0.001;
-
-            Phaser.Physics.Matter.Matter.Body.update(projectile.body, 16.67, 1, 1);
-            projectile.limitSpeed();
-          }
-          projectile.destroy();
-        }
-
-        //change player direction to face the cursor for aiming
-        var direction;
-        if ( (pointer.x + this.cameras.main.scrollX) > player.x) {
-          direction = 'r';
-        } else {
-          direction = 'l';
-        }
-        player.faceDirection(direction);
-      }
-    }, this);
+    this.events.on("preupdate", this.bubbleTarget, this);
 
     /**
      * Event for when charging ends
      * run on the update event in order to insure projectile goes into the
      *     physics engine at the right time to prevent glitching through walls
      */
-    this.events.on("update", function() {
-      var pointer = game.input.activePointer
-      if (pointer.justUp) {
-        //remove ghost particles
-        for (var i = playerProjectiles.length-1; i >= 0; i--) {
-          playerProjectiles[i].update();
-          if ( playerProjectiles[i] instanceof Projectile_Ghost) {
-            playerProjectiles[i].destroy();
-            playerProjectiles.splice(i,1);
-          }
-        }
+    this.events.on("update", this.castSpell, this);
 
-        //cast the current spell
-        var angle = Phaser.Math.Angle.Between(player.x, player.y, pointer.x + this.cameras.main.scrollX, pointer.y + this.cameras.main.scrollY);
-        if (player.state.spell === "teleport") {
-          var projectile = this.add.existing( new Projectile_Teleport(this, player.x+player.state.particleSourceX, player.y+player.state.particleSourceY, 'player') );
-          this.focusObject(projectile);
-          this.focus = projectile;
-        } else if (player.state.spell === "bubble" && !this.trail[0].touching){
-          var projectile = this.add.existing( new Projectile_Bubble(this, pointer.x + this.cameras.main.scrollX, pointer.y + this.cameras.main.scrollY, 'bubble',player.state.charge) );
-        } else {
-          player.state.endCharge();
-          return;
-        }
-        projectile.init(player.state.charge, angle);
-        playerProjectiles[playerProjectiles.length] = projectile;
-
-        player.state.endCharge();
-      }
-    }, this);
+    this.events.on("shutdown", this.destroy, this);
+    this.events.on("destroy", this.destroy, this);
 
   }
 
+  bubbleTarget() {
+    for (var i = this.trail.length-1; i >= 0; i--) {
+      this.trail[i].destroy();
+      this.trail.splice(i,1);
+    }
+    //it seems just up and is down fire seperately per loop
+    if (game.input.activePointer.isDown || game.input.activePointer.justUp) {
+      player.state.startCharge();
+
+      //add new ghost projectile
+      var pointer = game.input.activePointer;
+      if (player.state.spell === "bubble") {
+        var projectile = this.add.existing( new Projectile_Bubble_Ghost(this, pointer.x + this.cameras.main.scrollX, pointer.y + this.cameras.main.scrollY, 'bubble',player.state.charge) );
+        this.trail[this.trail.length] = projectile;
+      }
+    }
+  }
+
+  castSpell() {
+    var pointer = game.input.activePointer
+    if (pointer.justUp) {
+      //remove ghost particles
+      for (var i = playerProjectiles.length-1; i >= 0; i--) {
+        playerProjectiles[i].update();
+        if ( playerProjectiles[i] instanceof Projectile_Ghost) {
+          playerProjectiles[i].destroy();
+          playerProjectiles.splice(i,1);
+        }
+      }
+
+      //cast the current spell
+      var angle = Phaser.Math.Angle.Between(player.x, player.y, pointer.x + this.cameras.main.scrollX, pointer.y + this.cameras.main.scrollY);
+      if (player.state.spell === "teleport") {
+        var projectile = this.add.existing( new Projectile_Teleport(this, player.x+player.state.particleSourceX, player.y+player.state.particleSourceY, 'player') );
+        this.focusObject(projectile);
+        this.focus = projectile;
+      } else if (player.state.spell === "bubble" && !this.trail[0].touching){
+        var projectile = this.add.existing( new Projectile_Bubble(this, pointer.x + this.cameras.main.scrollX, pointer.y + this.cameras.main.scrollY, 'bubble',player.state.charge) );
+      } else {
+        player.state.endCharge();
+        return;
+      }
+      projectile.init(player.state.charge, angle);
+      playerProjectiles[playerProjectiles.length] = projectile;
+
+      player.state.endCharge();
+    }
+  }
+
   update () {
+    if (this.destroyed) {
+      return;
+    }
+    var pointer = game.input.activePointer;
+
+    if (game.input.activePointer.isDown) {
+      player.state.startCharge();
+
+      //add new ghost projectile
+
+      if (player.state.spell === "teleport") {
+        var angle = Phaser.Math.Angle.Between(player.x, player.y, pointer.x + this.cameras.main.scrollX, pointer.y + this.cameras.main.scrollY);
+        var projectile = this.add.existing( new Projectile_Ghost(this, player.x+player.state.particleSourceX, player.y+player.state.particleSourceY, 'projectile_large') );
+        projectile.init(player.state.charge, angle);
+        projectile.maxAge = 50;
+
+        for (var i = 0; i < 15; i++) {
+
+          this.trail[this.trail.length] = this.add.image(projectile.x, projectile.y, 'projectile_large');
+          this.trail[this.trail.length-1].setTint(0x60fcff);
+          this.trail[this.trail.length-1].setAlpha(1 - i/14.);
+
+          projectile.body.force.y = projectile.body.mass * 2 * 0.001;
+
+          Phaser.Physics.Matter.Matter.Body.update(projectile.body, 16.67, 1, 1);
+          projectile.limitSpeed();
+        }
+        projectile.destroy();
+      }
+
+      //change player direction to face the cursor for aiming
+      var direction;
+      if ( (pointer.x + this.cameras.main.scrollX) > player.x) {
+        direction = 'r';
+      } else {
+        direction = 'l';
+      }
+      player.faceDirection(direction);
+    }
+
     player.state.updateMana();
 
     //update particles
@@ -1104,6 +1202,57 @@ class Scene_game extends Phaser.Scene {
 
 
   }
+
+  destroy() {
+    this.destroyed = true;
+    this.events.off("shutdown", this.destroy, this);
+    this.events.off("destroy", this.destroy, this);
+    this.events.off("preupdate", this.bubbleTarget, this);
+    this.events.off("update", this.castSpell, this);
+  }
+}
+
+
+/**
+ * Level end screen
+ */
+class Scene_levelEnd extends Phaser.Scene {
+
+    constructor () {
+        super({ key: 'levelEndScene', active: true });
+
+    }
+
+    init (data) {
+      this.level = data.level
+      this.nextLevel = data.nextLevel
+    }
+
+    preload () {
+      //this.load.bitmapFont('editundo', 'assets/font/editundo_0.png', 'assets/font/editundo.fnt');
+      //this.load.image('ui', 'assets/UI_placeholder.png');
+    }
+
+    create () {
+      //this.add.bitmapText(220,180, 'editundo', 'Level ' + this.level + ' complete!');
+
+      //this.add.bitmapText(220,380, 'editundo', 'Press space for the next level.');
+
+      this.keySpace = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    }
+
+
+    /**
+     * update
+     *
+     */
+    update () {
+      if (Phaser.Input.Keyboard.JustUp(this.keySpace)) {
+        this.scene.start('GameScene', {level: this.nextLevel});
+      }
+
+
+    }
 }
 
 
@@ -1217,7 +1366,7 @@ class Structure extends Phaser.Physics.Matter.Image{
       }
     }, this);
 
-    this.scene.events.on("update", this.update, this);
+    this.scene.events.on("preupdate", this.update, this);
   }
 
   /**
@@ -1279,7 +1428,7 @@ var config = {
               x: 0,
               y: 2
           },
-          debug : false
+          debug : true
       }
    },
    plugins: {
@@ -1289,10 +1438,19 @@ var config = {
           mapping: "matterCollision" // Where to store in the Scene, e.g. scene.matterCollision
         }]
     },
-   scene: [ Scene_game, Scene_UI ]
+   scene: [ Scene_game, Scene_UI],
+
+   // callbacks: {
+   //    postBoot() {
+   //      game.scene.add('UIScene', scenes.scene_levelEnd, false);
+   //
+   //      //game.scene.start('SceneA');
+   //    }
+   //  }
 };
 
 var game = new Phaser.Game(config);
+game.scene.add('levelEndScene', Scene_levelEnd, false)
 
 var player;
 var playerProjectiles = [];

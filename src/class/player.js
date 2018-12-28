@@ -79,12 +79,28 @@ class Player extends Phaser.Physics.Matter.Image{
                 this.scene.events.emit('changeTooltip', "Q to read");
               } else if (gameObjectB instanceof Lever) {
                 this.scene.events.emit('changeTooltip', "Q to pull");
+              } else if (gameObjectB instanceof Goal) {
+                this.scene.events.emit('changeTooltip', "Q to finish level")
               }
 
             }
           },
           context: this
         });
+
+        this.scene.events.on("shutdown", this.destroy, this);
+        this.scene.events.on("destroy", this.destroy, this);
+    }
+
+    destroy() {
+      this.destroyed = true;
+      this.scene.events.off("shutdown", this.destroy, this);
+      this.scene.events.off("destroy", this.destroy, this);
+      //this.scene.matter.world.off("beforeupdate", this.reset, this);
+
+      this.scene.matterCollision.removeOnCollideStart({objectA: [this.sensors.bottom, this.sensors.left, this.sensors.right]})
+      this.scene.matterCollision.removeOnCollideActive({objectA: [this.sensors.bottom, this.sensors.left, this.sensors.right]})
+      this.scene.matterCollision.removeOnCollideActive({objectA: this})
     }
 
     onSensorCollide({ bodyA, bodyB, pair }) {
@@ -200,6 +216,9 @@ class Player extends Phaser.Physics.Matter.Image{
       }
       else if (this.currentInteractive instanceof Lever) {
         //console.log("pull lever")
+        this.currentInteractive.activate();
+      }
+      else {
         this.currentInteractive.activate();
       }
     }
