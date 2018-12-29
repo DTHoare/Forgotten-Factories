@@ -121,6 +121,7 @@ class Player extends Phaser.Physics.Matter.Image{
 
       this.scene.focusPlayer();
       this.deathText = this.scene.add.bitmapText(this.x,this.y - 50, 'editundo', 'oops.');
+      this.scene.add.bitmapText(this.x,this.y, 'editundo', '*').setTint('0xff0000').setAlpha(0.8)
       this.scene.matter.world.pause();
 
       this.deathTimer = this.scene.time.delayedCall(1000, this.respawn, {}, this);

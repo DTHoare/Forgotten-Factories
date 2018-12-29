@@ -5,8 +5,8 @@
 class Structure extends Phaser.Physics.Matter.Image{
 
   constructor(scene, x, y, texture, objectConfig){
-    x = x + (objectConfig.width / 2)*Math.cos(objectConfig.rotation*Math.PI/180.);
-    y = y + (objectConfig.height / 2)*Math.cos(objectConfig.rotation*Math.PI/180.);
+    x = x + (objectConfig.width / 2.)*Math.cos( (objectConfig.rotation-45.)*Math.PI/180.)*1.414;
+    y = y + (objectConfig.height / 2.)*Math.sin( (objectConfig.rotation-45.)*Math.PI/180.)*1.414;
     super(scene.matter.world, x, y, texture);
     this.scene = scene;
     this.destroyed = false;

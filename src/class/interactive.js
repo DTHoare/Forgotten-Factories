@@ -13,8 +13,8 @@ class Interactive extends Phaser.Physics.Matter.Image{
    * @param  {type} id      tile id to use from texture
    */
   constructor(scene, x, y, texture, id, objectConfig){
-      x = x + (objectConfig.width / 2)*Math.cos(objectConfig.rotation*Math.PI/180.);
-      y = y - (objectConfig.height / 2)*Math.cos(objectConfig.rotation*Math.PI/180.);
+      x = x + (objectConfig.width / 2.)*Math.cos( (objectConfig.rotation-45.)*Math.PI/180.)*1.414;
+      y = y + (objectConfig.height / 2.)*Math.sin( (objectConfig.rotation-45.)*Math.PI/180.)*1.414;
       super(scene.matter.world, x, y, texture, id);
       this.setAngle(objectConfig.rotation);
       this.scene = scene;

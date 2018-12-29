@@ -46,8 +46,8 @@ class Interactive extends Phaser.Physics.Matter.Image{
    * @param  {type} id      tile id to use from texture
    */
   constructor(scene, x, y, texture, id, objectConfig){
-      x = x + (objectConfig.width / 2)*Math.cos(objectConfig.rotation*Math.PI/180.);
-      y = y - (objectConfig.height / 2)*Math.cos(objectConfig.rotation*Math.PI/180.);
+      x = x + (objectConfig.width / 2.)*Math.cos( (objectConfig.rotation-45.)*Math.PI/180.)*1.414;
+      y = y + (objectConfig.height / 2.)*Math.sin( (objectConfig.rotation-45.)*Math.PI/180.)*1.414;
       super(scene.matter.world, x, y, texture, id);
       this.setAngle(objectConfig.rotation);
       this.scene = scene;
@@ -318,6 +318,7 @@ class Player extends Phaser.Physics.Matter.Image{
 
       this.scene.focusPlayer();
       this.deathText = this.scene.add.bitmapText(this.x,this.y - 50, 'editundo', 'oops.');
+      this.scene.add.bitmapText(this.x,this.y, 'editundo', '*').setTint('0xff0000').setAlpha(0.8)
       this.scene.matter.world.pause();
 
       this.deathTimer = this.scene.time.delayedCall(1000, this.respawn, {}, this);
@@ -1444,8 +1445,8 @@ class Scene_UI extends Phaser.Scene {
 class Structure extends Phaser.Physics.Matter.Image{
 
   constructor(scene, x, y, texture, objectConfig){
-    x = x + (objectConfig.width / 2)*Math.cos(objectConfig.rotation*Math.PI/180.);
-    y = y + (objectConfig.height / 2)*Math.cos(objectConfig.rotation*Math.PI/180.);
+    x = x + (objectConfig.width / 2.)*Math.cos( (objectConfig.rotation-45.)*Math.PI/180.)*1.414;
+    y = y + (objectConfig.height / 2.)*Math.sin( (objectConfig.rotation-45.)*Math.PI/180.)*1.414;
     super(scene.matter.world, x, y, texture);
     this.scene = scene;
     this.destroyed = false;
