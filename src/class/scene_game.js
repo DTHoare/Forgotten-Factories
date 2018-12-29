@@ -12,7 +12,6 @@ class Scene_game extends Phaser.Scene {
     // if (!this.sys.settings.data.level) {
     //   this.sys.settings.data.level = 1;
     // }
-    this.level = "1"
   }
 
   focusPlayer() {
@@ -27,7 +26,7 @@ class Scene_game extends Phaser.Scene {
     this.destroyed = false;
     this.level = data.level
     if (!data.level) {
-      this.level = "1"
+      this.level = "3"
     }
   }
 
@@ -43,7 +42,8 @@ class Scene_game extends Phaser.Scene {
 
     // map made with Tiled in JSON format
     this.load.tilemapTiledJSON('map1', 'assets/maps/demo_level_1.json');
-    this.load.tilemapTiledJSON('map2', 'assets/maps/demo_level_tutorial.json');
+    this.load.tilemapTiledJSON('map2', 'assets/maps/demo_level_2.json');
+    this.load.tilemapTiledJSON('map3', 'assets/maps/demo_level_3.json');
 
     // tiles in spritesheet
     this.load.spritesheet('tiles', 'assets/maps/tiles_placeholder.png', {frameWidth: 32, frameHeight: 32});
@@ -61,13 +61,15 @@ class Scene_game extends Phaser.Scene {
 
     var map;
     // load the map
-    console.log(this.level)
     switch (this.level) {
       case "1":
         map = this.make.tilemap({key: 'map1'});
         break;
       case "2":
         map = this.make.tilemap({key: 'map2'});
+        break;
+      case "3":
+        map = this.make.tilemap({key: 'map3'});
         break;
     }
 
@@ -87,6 +89,22 @@ class Scene_game extends Phaser.Scene {
     var sceneryLayer = map.createDynamicLayer('scenery', tiles, 0, 0);
     //sceneryLayer.setCollisionByProperty({ collides: true });
     this.matter.world.convertTilemapLayer(sceneryLayer);
+
+    var lethalLayer = map.createDynamicLayer('lethal', tiles, 0, 0);
+    if (lethalLayer) {
+      lethalLayer.setCollisionByProperty({ collides: true });
+      this.matter.world.convertTilemapLayer(lethalLayer);
+
+      lethalLayer.forEachTile(tile => {
+        if (tile.properties.collides) {
+          tile.physics.matterBody.setCollisionCategory(collision_block);
+          tile.isLethal = true;
+        }
+
+        tile.tint = 0x0000d6
+      });
+    }
+
 
     //set collision properties based on tiled properties
     groundLayer.forEachTile(tile => {
@@ -110,33 +128,62 @@ class Scene_game extends Phaser.Scene {
     });
 
     //setup the interactive books in the game world
-    map.getObjectLayer("books").objects.forEach(book => {
-      const { x, y, width, height } = book;
-      // Tiled origin for its coordinate system is (0, 1), but we want coordinates relative to an
-      // origin of (0.5, 0.5)
-      var bookBody = this.add
-        .existing(new Book(this, x, y, "tiles", 40, book));
+    var bookLayer = map.getObjectLayer("books")
+    if (bookLayer) {
+      bookLayer.objects.forEach(book => {
+        const { x, y, width, height } = book;
+        // Tiled origin for its coordinate system is (0, 1), but we want coordinates relative to an
+        // origin of (0.5, 0.5)
+        var bookBody = this.add
+          .existing(new Book(this, x, y, "tiles", 40, book));
 
-      this.books[this.books.length] = bookBody;
-    });
+        this.books[this.books.length] = bookBody;
+      });
+    }
 
-    map.getObjectLayer("levers").objects.forEach(lever => {
-      const { x, y, width, height } = lever;
-      var leverBody = this.add
-        .existing(new Lever(this, x, y, "tiles", 41, lever));
-    });
+    var leverLayer = map.getObjectLayer("levers")
+    if (leverLayer) {
+      leverLayer.objects.forEach(lever => {
+        const { x, y, width, height } = lever;
+        var leverBody = this.add
+          .existing(new Lever(this, x, y, "tiles", 41, lever));
+      });
+    }
 
-    map.getObjectLayer("doors").objects.forEach(door => {
-      const { x, y, width, height } = door;
-      var doorBody = this.add
-        .existing(new Structure(this, x, y, "door", door));
-    });
+    var doorLayer = map.getObjectLayer("doors")
+    if (doorLayer) {
+      doorLayer.objects.forEach(door => {
+        const { x, y, width, height } = door;
+        var doorBody = this.add
+          .existing(new Door(this, x, y, "door", door));
+      });
+    }
 
-    map.getObjectLayer("goals").objects.forEach(goal => {
-      const { x, y, width, height } = goal;
-      var goalBody = this.add
-        .existing(new Goal(this, x, y, "tiles", 42, goal));
-    });
+    var moverLayer = map.getObjectLayer("movers")
+    if (moverLayer) {
+      moverLayer.objects.forEach(mover => {
+        const { x, y, width, height } = mover;
+        var moverBody = this.add
+          .existing(new Mover(this, x, y, "door", mover));
+      });
+    }
+
+    var goalLayer = map.getObjectLayer("goals")
+    if (goalLayer) {
+      goalLayer.objects.forEach(goal => {
+        const { x, y, width, height } = goal;
+        var goalBody = this.add
+          .existing(new Goal(this, x, y, "tiles", 42, goal));
+      });
+    }
+
+    var checkpointLayer = map.getObjectLayer("checkpoint")
+    if (checkpointLayer) {
+      checkpointLayer.objects.forEach(goal => {
+        var goalBody = new Checkpoint(this, goal);
+      });
+    }
+
 
     // add spawn point and player
     const { x, y } = map.findObject("Spawn", obj => obj.name === "Spawn Point");
@@ -177,6 +224,9 @@ class Scene_game extends Phaser.Scene {
   }
 
   bubbleTarget() {
+    if (this.destroyed) {
+      return;
+    }
     for (var i = this.trail.length-1; i >= 0; i--) {
       this.trail[i].destroy();
       this.trail.splice(i,1);
@@ -195,6 +245,9 @@ class Scene_game extends Phaser.Scene {
   }
 
   castSpell() {
+    if (this.destroyed) {
+      return;
+    }
     var pointer = game.input.activePointer
     if (pointer.justUp) {
       //remove ghost particles

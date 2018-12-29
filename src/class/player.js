@@ -72,6 +72,14 @@ class Player extends Phaser.Physics.Matter.Image{
           objectA: this,
           callback: function(eventData) {
             const { bodyB, gameObjectB, pair} = eventData;
+            if(gameObjectB instanceof Checkpoint) {
+              this.resetPosition = {x:gameObjectB.x, y:gameObjectB.y}
+            }
+
+            if(gameObjectB.isLethal) {
+              this.death();
+            }
+
             if(gameObjectB instanceof Interactive) {
             //if(gameObjectB instanceof Interactive) {
               this.currentInteractive = gameObjectB;
@@ -101,6 +109,31 @@ class Player extends Phaser.Physics.Matter.Image{
       this.scene.matterCollision.removeOnCollideStart({objectA: [this.sensors.bottom, this.sensors.left, this.sensors.right]})
       this.scene.matterCollision.removeOnCollideActive({objectA: [this.sensors.bottom, this.sensors.left, this.sensors.right]})
       this.scene.matterCollision.removeOnCollideActive({objectA: this})
+    }
+
+    death() {
+      if (this.destroyed) {
+        return;
+      }
+      this.destroyed = true;
+      this.scene.destroyed = true;
+      this.state.charging = false;
+
+      this.scene.focusPlayer();
+      this.deathText = this.scene.add.bitmapText(this.x,this.y - 50, 'editundo', 'oops.');
+      this.scene.matter.world.pause();
+
+      this.deathTimer = this.scene.time.delayedCall(1000, this.respawn, {}, this);
+
+    }
+
+    respawn() {
+      this.destroyed = false;
+      this.scene.destroyed = false;
+      this.deathText.destroy()
+      this.scene.focusObject(this.scene.focus)
+      this.setPosition(this.resetPosition.x, this.resetPosition.y);
+      this.scene.matter.world.resume()
     }
 
     onSensorCollide({ bodyA, bodyB, pair }) {

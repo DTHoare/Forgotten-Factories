@@ -111,8 +111,6 @@ class Projectile_Teleport extends Projectile{
       }
     });
 
-    console.log(this.fail)
-
     event.pairs.forEach(pair => {
       if(pair.bodyA === this.body) {
         thisBody = pair.bodyA
@@ -128,7 +126,6 @@ class Projectile_Teleport extends Projectile{
         if(this.fail) {
           //console.log("spell fail")
         } else {
-          console.log("spell success")
           this.age = this.maxAge +1 ;
         }
 
