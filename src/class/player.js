@@ -73,13 +73,6 @@ class Player extends Phaser.Physics.Matter.Image{
           objectA: this,
           callback: function(eventData) {
             const { bodyB, gameObjectB, pair} = eventData;
-            if(gameObjectB instanceof Checkpoint) {
-              this.resetPosition = {x:gameObjectB.x, y:gameObjectB.y}
-            }
-
-            if(gameObjectB.isLethal && this.scene.focus === this) {
-              this.death();
-            }
 
             if(gameObjectB instanceof Interactive) {
             //if(gameObjectB instanceof Interactive) {
@@ -105,7 +98,7 @@ class Player extends Phaser.Physics.Matter.Image{
               this.resetPosition = {x:gameObjectB.x, y:gameObjectB.y}
             }
 
-            if(gameObjectB.isLethal) {
+            if(gameObjectB.isLethal  && this.scene.focus === this) {
               this.death(this.x, this.y);
             }
 
@@ -133,12 +126,13 @@ class Player extends Phaser.Physics.Matter.Image{
       if (this.destroyed) {
         return;
       }
+      this.scene.cameras.main.stopFollow();
       this.destroyed = true;
       this.scene.destroyed = true;
       this.state.endCharge()
 
       this.deathText = this.scene.add.bitmapText(x,y - 50, 'editundo', 'oops.');
-      this.scene.add.bitmapText(x,y, 'editundo', '*').setTint('0xff0000').setAlpha(0.8)
+      this.scene.add.bitmapText(x,y, 'editundo', '*').setTint('0xffffff').setAlpha(0.8)
       this.scene.matter.world.pause();
 
       this.deathTimer = this.scene.time.delayedCall(1000, this.respawn, {}, this);
@@ -146,11 +140,13 @@ class Player extends Phaser.Physics.Matter.Image{
     }
 
     respawn() {
+      this.scene.focusPlayer()
       this.destroyed = false;
       this.scene.destroyed = false;
       this.deathText.destroy()
-      this.scene.focusObject(this.scene.focus)
       this.setPosition(this.resetPosition.x, this.resetPosition.y);
+      this.setVelocityX(0)
+      this.setVelocityY(0)
       this.scene.matter.world.resume()
     }
 
@@ -213,6 +209,9 @@ class Player extends Phaser.Physics.Matter.Image{
     }
 
     createBarrier(startX, startY, endX, endY) {
+      if (this.activeBarrier && !this.activeBarrier.destroyed) {
+        this.activeBarrier.destroy();
+      }
       startX += this.scene.cameras.main.scrollX
       endX += this.scene.cameras.main.scrollX
       startY += this.scene.cameras.main.scrollY
@@ -222,13 +221,13 @@ class Player extends Phaser.Physics.Matter.Image{
 
       params.height = 16
       params.width = Math.sqrt( (startX-endX)**2 + (startY-endY)**2 )
-      params.width = Math.min(this.state.charge *1.5, params.width)
+      params.width = Math.min(this.state.charge *1.0, params.width)
       params.rotation = Phaser.Math.Angle.Between(startX, startY, endX, endY) * 180. / Math.PI
       params.gid = -1 //for processing in Barrier
       params.properties = []
 
-      var barrier = this.scene.add.existing( new Barrier(this.scene, startX, startY+(params.height/2.), 'door', params) )
-      return barrier;
+      this.activeBarrier = this.scene.add.existing( new Barrier(this.scene, startX, startY+(params.height/2.), 'door', params) )
+      return this.activeBarrier;
     }
 
 

@@ -18,12 +18,14 @@
 
 * teleport self
 * bubble platform
+* barrier spell
 * mid-air jump
 
 #### physics
 
 * matter.js modified to allow for one-sided collisions
 * low agility character - spells are more controllable and agile
+* particles
 
 #### environment
 
@@ -31,12 +33,14 @@
 * levers and doors
 * books to read
 * lifts and moving platforms
+* lethal projectiles
+* regular checkpoints
 
 ## TODO:
 
-* harmful tiles
-* checkpoints
+* destructable tiles
 * more Spells
+* duel wield spells/balance controls
 * narrative
 * menu system/UI upgrade
 * sound

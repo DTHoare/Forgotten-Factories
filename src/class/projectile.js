@@ -101,6 +101,9 @@ class Projectile_Teleport extends Projectile{
   }
 
   update() {
+    if(this.destroyed) {
+      return;
+    }
     if (this.age > this.maxAge) {
       if(!this.fail) {
         player.setX(this.x);
@@ -158,6 +161,7 @@ class Projectile_Teleport extends Projectile{
       }
       if(otherBody.gameObject.isLethal) {
         player.death(this.x, this.y)
+        this.destroy()
         this.fail = true;
         this.age = this.maxAge +1 ;
       }
@@ -323,7 +327,7 @@ class Projectile_emitted extends Projectile{
   constructor(scene, x, y, texture, objectConfig){
     super(scene, x, y, texture);
     this.isLethal = true;
-    this.maxVelocity = 6;
+    this.maxVelocity = 20;
 
     this.properties = {
       "angle": 0,
@@ -347,10 +351,10 @@ class Projectile_emitted extends Projectile{
 
     this.setCollisionCategory(collision_particle);
     this.setCollidesWith([collision_block, collision_player, collision_ghost]);
-    this.setBounce(0.8);
-    this.setTint(0x6d0000)
+    this.setBounce(0.2);
+    this.setTint(0xfd0000)
 
-    this.maxAge = this.properties["lifetime"]
+    this.maxAge = parseFloat(this.properties["lifetime"])
     this.applyForce({
       x: this.properties["force"]*Math.cos(this.properties["angle"]*Math.PI/180.),
       y: this.properties["force"]*Math.sin(this.properties["angle"]*Math.PI/180.)

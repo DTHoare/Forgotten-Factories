@@ -24,8 +24,6 @@ class Emitter {
       this.properties[key["name"]] = key["value"];
     }
 
-    console.log(this.properties)
-
     this.scene.events.on("update", this.update, this);
     this.scene.events.on("shutdown", this.destroy, this);
     this.scene.events.on("destroy", this.destroy, this);

@@ -15,10 +15,12 @@ class Scene_game extends Phaser.Scene {
   }
 
   focusPlayer() {
+    this.focus = player
     this.cameras.main.startFollow(player, true, 0.5, 0.5, 0, 150);
   }
 
   focusObject(obj) {
+    this.focus = obj
     this.cameras.main.startFollow(obj, true, 0.5, 0.5, 0, 150);
   }
 
@@ -80,15 +82,28 @@ class Scene_game extends Phaser.Scene {
 
     // tiles for the ground layer
     var tiles = map.addTilesetImage('Tiles','tiles');
+    var lethalLayer = map.createDynamicLayer('lethal', tiles, 0, 0);
+    if (lethalLayer) {
+      lethalLayer.setCollisionByProperty({ collides: true });
+      this.matter.world.convertTilemapLayer(lethalLayer);
+
+      lethalLayer.forEachTile(tile => {
+        if (tile.properties.collides) {
+          tile.physics.matterBody.setCollisionCategory(collision_block);
+          tile.isLethal = true;
+        }
+
+        tile.tint = 0x0000d6
+      });
+    }
+    var barLayer = map.createDynamicLayer('bars', tiles, 0, 0);
+    barLayer.setCollisionByProperty({ collides: true });
+    this.matter.world.convertTilemapLayer(barLayer);
 
     // create the ground layer
     var groundLayer = map.createDynamicLayer('world', tiles, 0, 0);
     groundLayer.setCollisionByProperty({ collides: true });
     this.matter.world.convertTilemapLayer(groundLayer);
-
-    var barLayer = map.createDynamicLayer('bars', tiles, 0, 0);
-    barLayer.setCollisionByProperty({ collides: true });
-    this.matter.world.convertTilemapLayer(barLayer);
 
     var sceneryLayer = map.createDynamicLayer('scenery', tiles, 0, 0);
     //sceneryLayer.setCollisionByProperty({ collides: true });
@@ -257,7 +272,7 @@ class Scene_game extends Phaser.Scene {
         var projectile = player.createBarrier(pointer.downX, pointer.downY, pointer.x, pointer.y)
         projectile.body.isSensor = true;
         projectile.setAlpha(0.4)
-        this.trail[this.trail.length] = projectile;
+        //this.trail[this.trail.length] = projectile;
       }
     }
   }
@@ -283,7 +298,6 @@ class Scene_game extends Phaser.Scene {
         var projectile = this.add.existing( new Projectile_Teleport(this, player.x+player.state.particleSourceX, player.y+player.state.particleSourceY, 'player') );
         projectile.init(player.state.charge, angle);
         this.focusObject(projectile);
-        this.focus = projectile;
       } else if (player.state.spell === "bubble" && !this.trail[0].touching){
         var projectile = this.add.existing( new Projectile_Bubble(this, pointer.x + this.cameras.main.scrollX, pointer.y + this.cameras.main.scrollY, 'bubble',player.state.charge) );
       } else if (player.state.spell ==="barrier") {

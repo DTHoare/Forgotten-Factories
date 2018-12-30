@@ -246,7 +246,7 @@ class Barrier extends Structure {
   constructor(scene, x, y, texture, objectConfig){
     super(scene, x, y, texture, objectConfig)
     this.age = 0;
-    this.maxAge = 300;
+    this.maxAge = 150;
     this.setTint(0x60fcff);
 
     this.scene.events.on("preupdate", this.update, this);
