@@ -26,7 +26,7 @@ class Scene_game extends Phaser.Scene {
     this.destroyed = false;
     this.level = data.level
     if (!data.level) {
-      this.level = "3"
+      this.level = "4"
     }
   }
 
@@ -44,6 +44,7 @@ class Scene_game extends Phaser.Scene {
     this.load.tilemapTiledJSON('map1', 'assets/maps/demo_level_1.json');
     this.load.tilemapTiledJSON('map2', 'assets/maps/demo_level_2.json');
     this.load.tilemapTiledJSON('map3', 'assets/maps/demo_level_3.json');
+    this.load.tilemapTiledJSON('map4', 'assets/maps/demo_level_4.json');
 
     // tiles in spritesheet
     this.load.spritesheet('tiles', 'assets/maps/tiles_placeholder.png', {frameWidth: 32, frameHeight: 32});
@@ -70,6 +71,9 @@ class Scene_game extends Phaser.Scene {
         break;
       case "3":
         map = this.make.tilemap({key: 'map3'});
+        break;
+      case "4":
+        map = this.make.tilemap({key: 'map4'});
         break;
     }
 
@@ -184,6 +188,13 @@ class Scene_game extends Phaser.Scene {
       });
     }
 
+    var emitterLayer = map.getObjectLayer("emitters")
+    if (emitterLayer) {
+      emitterLayer.objects.forEach(emitter => {
+        var emitterBody = new Emitter(this, emitter);
+      });
+    }
+
 
     // add spawn point and player
     const { x, y } = map.findObject("Spawn", obj => obj.name === "Spawn Point");
@@ -241,6 +252,13 @@ class Scene_game extends Phaser.Scene {
         var projectile = this.add.existing( new Projectile_Bubble_Ghost(this, pointer.x + this.cameras.main.scrollX, pointer.y + this.cameras.main.scrollY, 'bubble',player.state.charge) );
         this.trail[this.trail.length] = projectile;
       }
+
+      else if(player.state.spell === "barrier") {
+        var projectile = player.createBarrier(pointer.downX, pointer.downY, pointer.x, pointer.y)
+        projectile.body.isSensor = true;
+        projectile.setAlpha(0.4)
+        this.trail[this.trail.length] = projectile;
+      }
     }
   }
 
@@ -263,16 +281,19 @@ class Scene_game extends Phaser.Scene {
       var angle = Phaser.Math.Angle.Between(player.x, player.y, pointer.x + this.cameras.main.scrollX, pointer.y + this.cameras.main.scrollY);
       if (player.state.spell === "teleport") {
         var projectile = this.add.existing( new Projectile_Teleport(this, player.x+player.state.particleSourceX, player.y+player.state.particleSourceY, 'player') );
+        projectile.init(player.state.charge, angle);
         this.focusObject(projectile);
         this.focus = projectile;
       } else if (player.state.spell === "bubble" && !this.trail[0].touching){
         var projectile = this.add.existing( new Projectile_Bubble(this, pointer.x + this.cameras.main.scrollX, pointer.y + this.cameras.main.scrollY, 'bubble',player.state.charge) );
+      } else if (player.state.spell ==="barrier") {
+        var projectile = player.createBarrier(pointer.downX, pointer.downY, pointer.x, pointer.y)
       } else {
         player.state.endCharge();
         return;
       }
-      projectile.init(player.state.charge, angle);
-      playerProjectiles[playerProjectiles.length] = projectile;
+
+      //playerProjectiles[playerProjectiles.length] = projectile;
 
       player.state.endCharge();
     }
@@ -325,7 +346,7 @@ class Scene_game extends Phaser.Scene {
     var p = player.generateParticles();
     if(p instanceof Projectile) {
       //p.setCollisionCategory(collision_particle);
-      particles[particles.length] = p;
+      //particles[particles.length] = p;
       this.add.existing(p);
     }
 
@@ -375,16 +396,6 @@ class Scene_game extends Phaser.Scene {
       }
     }
 
-    //cancel all particles - does not cause teleport
-    if( this.keySpace.isDown) {
-      for (var i = playerProjectiles.length-1; i >= 0; i--) {
-        playerProjectiles[i].destroy();
-        playerProjectiles.splice(i,1);
-      }
-      this.focusPlayer();
-      this.focus = player;
-    }
-
     //jump on key press, not key down
     // this prevents instant double jumps
     if (Phaser.Input.Keyboard.JustDown(this.cursors.up) || Phaser.Input.Keyboard.JustDown(this.keyW)) {
@@ -403,40 +414,6 @@ class Scene_game extends Phaser.Scene {
 
     if (Phaser.Input.Keyboard.JustDown(this.keyQ) && player.currentInteractive) {
       player.interact();
-    }
-
-    //update particles
-    for (var i = playerProjectiles.length-1; i >= 0; i--) {
-      playerProjectiles[i].update();
-
-      //dead playerProjectiles:
-      if ( playerProjectiles[i].age > playerProjectiles[i].maxAge) {
-
-        // cast the teleport part of the teleport spell
-        if (playerProjectiles[i] instanceof Projectile_Teleport) {
-
-          if(!playerProjectiles[i].fail) {
-            player.setX(playerProjectiles[i].x);
-            player.setY(playerProjectiles[i].y);
-            player.setVelocityX(playerProjectiles[i].body.velocity.x);
-            player.setVelocityY(playerProjectiles[i].body.velocity.y);
-          }
-
-          this.focusPlayer();
-          this.focus = player;
-        }
-        playerProjectiles[i].destroy();
-        playerProjectiles.splice(i,1);
-      }
-    }
-
-    //update particles
-    for (var i = particles.length-1; i >= 0; i--) {
-      particles[i].update();
-      if ( particles[i].age > particles[i].maxAge) {
-        particles[i].destroy();
-        particles.splice(i,1);
-      }
     }
 
 

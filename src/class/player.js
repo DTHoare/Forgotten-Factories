@@ -20,6 +20,7 @@ class Player extends Phaser.Physics.Matter.Image{
         super(scene.matter.world, x, y, texture);
         this.scene = scene;
         this.state = new PlayerState();
+        this.resetPosition = {x:x, y:y}
         //this.setCollisionCategory(collision_player);
         //this.setCollidesWith([collision_block, collision_blockPhysical, collision_interactive]);
         this.currentInteractive = null;
@@ -49,7 +50,7 @@ class Player extends Phaser.Physics.Matter.Image{
           .setBounce(0.2)
 
         this.setCollisionCategory(collision_player)
-        this.setCollidesWith([collision_block, collision_blockPhysical, collision_interactive]);
+        this.setCollidesWith([collision_block, collision_blockPhysical, collision_interactive, collision_particle]);
 
         //reset collision information each tick
         this.isTouching = { left: false, right: false, ground: false };
@@ -76,7 +77,7 @@ class Player extends Phaser.Physics.Matter.Image{
               this.resetPosition = {x:gameObjectB.x, y:gameObjectB.y}
             }
 
-            if(gameObjectB.isLethal) {
+            if(gameObjectB.isLethal && this.scene.focus === this) {
               this.death();
             }
 
@@ -96,6 +97,22 @@ class Player extends Phaser.Physics.Matter.Image{
           context: this
         });
 
+        scene.matterCollision.addOnCollideStart({
+          objectA: this,
+          callback: function(eventData) {
+            const { bodyB, gameObjectB, pair} = eventData;
+            if(gameObjectB instanceof Checkpoint) {
+              this.resetPosition = {x:gameObjectB.x, y:gameObjectB.y}
+            }
+
+            if(gameObjectB.isLethal) {
+              this.death(this.x, this.y);
+            }
+
+          },
+          context: this
+        });
+
         this.scene.events.on("shutdown", this.destroy, this);
         this.scene.events.on("destroy", this.destroy, this);
     }
@@ -108,20 +125,20 @@ class Player extends Phaser.Physics.Matter.Image{
 
       this.scene.matterCollision.removeOnCollideStart({objectA: [this.sensors.bottom, this.sensors.left, this.sensors.right]})
       this.scene.matterCollision.removeOnCollideActive({objectA: [this.sensors.bottom, this.sensors.left, this.sensors.right]})
+      this.scene.matterCollision.removeOnCollideStart({objectA: this})
       this.scene.matterCollision.removeOnCollideActive({objectA: this})
     }
 
-    death() {
+    death(x, y) {
       if (this.destroyed) {
         return;
       }
       this.destroyed = true;
       this.scene.destroyed = true;
-      this.state.charging = false;
+      this.state.endCharge()
 
-      this.scene.focusPlayer();
-      this.deathText = this.scene.add.bitmapText(this.x,this.y - 50, 'editundo', 'oops.');
-      this.scene.add.bitmapText(this.x,this.y, 'editundo', '*').setTint('0xff0000').setAlpha(0.8)
+      this.deathText = this.scene.add.bitmapText(x,y - 50, 'editundo', 'oops.');
+      this.scene.add.bitmapText(x,y, 'editundo', '*').setTint('0xff0000').setAlpha(0.8)
       this.scene.matter.world.pause();
 
       this.deathTimer = this.scene.time.delayedCall(1000, this.respawn, {}, this);
@@ -195,6 +212,25 @@ class Player extends Phaser.Physics.Matter.Image{
 
     }
 
+    createBarrier(startX, startY, endX, endY) {
+      startX += this.scene.cameras.main.scrollX
+      endX += this.scene.cameras.main.scrollX
+      startY += this.scene.cameras.main.scrollY
+      endY += this.scene.cameras.main.scrollY
+
+      var params = function() {}
+
+      params.height = 16
+      params.width = Math.sqrt( (startX-endX)**2 + (startY-endY)**2 )
+      params.width = Math.min(this.state.charge *1.5, params.width)
+      params.rotation = Phaser.Math.Angle.Between(startX, startY, endX, endY) * 180. / Math.PI
+      params.gid = -1 //for processing in Barrier
+      params.properties = []
+
+      var barrier = this.scene.add.existing( new Barrier(this.scene, startX, startY+(params.height/2.), 'door', params) )
+      return barrier;
+    }
+
 
     /**
      * faceDirection - set the faceDirection
@@ -228,7 +264,7 @@ class Player extends Phaser.Physics.Matter.Image{
 
     switchSpell() {
       if (this.state.spell === "teleport") {
-        this.state.spell = "bubble";
+        this.state.spell = "barrier";
       } else {
         this.state.spell = "teleport";
       }

@@ -5,8 +5,17 @@
 class Structure extends Phaser.Physics.Matter.Image{
 
   constructor(scene, x, y, texture, objectConfig){
-    x = x + (objectConfig.width / 2.)*Math.cos( (objectConfig.rotation-45.)*Math.PI/180.)*1.414;
-    y = y + (objectConfig.height / 2.)*Math.sin( (objectConfig.rotation-45.)*Math.PI/180.)*1.414;
+    var length = Math.sqrt( objectConfig.width**2 + objectConfig.height**2) /2.
+    var angle = Math.atan(objectConfig.height/objectConfig.width)* 180./Math.PI
+    if (objectConfig.gid !== undefined) {
+      x = x + (length )*Math.cos( (objectConfig.rotation-angle)*Math.PI/180.);
+      y = y + (length )*Math.sin( (objectConfig.rotation-angle)*Math.PI/180.);
+    } else {
+      x = x + (length )*Math.cos( (objectConfig.rotation+angle)*Math.PI/180.);
+      y = y + (length )*Math.sin( (objectConfig.rotation+angle)*Math.PI/180.);
+    }
+
+
     super(scene.matter.world, x, y, texture);
     this.scene = scene;
     this.destroyed = false;
@@ -20,6 +29,9 @@ class Structure extends Phaser.Physics.Matter.Image{
       width: objectConfig["width"],
       height: objectConfig["height"]})
 
+    this.setAngle(objectConfig.rotation);
+    this.setIgnoreGravity(true)
+
     this.properties = {};
 
     for (var i = 0; i < objectConfig.properties.length; i++){
@@ -30,14 +42,30 @@ class Structure extends Phaser.Physics.Matter.Image{
     this.setCollisionCategory(collision_block);
     //this.setCollidesWith([collision_block, collision_player]);
     //
+    scene.matterCollision.addOnCollideStart({
+      objectA: [this],
+      callback: function(eventData) {
+        const { bodyB, gameObjectB, pair} = eventData;
+        if (pair.gameObjectA === this) {
+          pair.onlyB = true;
+        } else {
+          pair.onlyA = true;
+        }
+
+      },
+      context: this
+    });
+
     this.scene.events.on("shutdown", this.destroy, this);
     this.scene.events.on("destroy", this.destroy, this);
   }
 
   destroy() {
     this.destroyed = true;
+    this.scene.matterCollision.removeOnCollideStart({objectA: [this]})
     this.scene.events.off("shutdown", this.destroy, this);
     this.scene.events.off("destroy", this.destroy, this);
+    super.destroy()
   }
 }
 
@@ -113,7 +141,6 @@ class Mover extends Structure {
     super(scene, x, y, texture, objectConfig)
     this.up = true
     this.right = true
-    this.setIgnoreGravity(true)
 
     this.xMax = this.x
     this.xMin = this.x
@@ -144,19 +171,7 @@ class Mover extends Structure {
 
     this.scene.events.on("preupdate", this.update, this);
 
-    scene.matterCollision.addOnCollideStart({
-      objectA: [this],
-      callback: function(eventData) {
-        const { bodyB, gameObjectB, pair} = eventData;
-        if (pair.gameObjectA === this) {
-          pair.onlyB = true;
-        } else {
-          pair.onlyA = true;
-        }
 
-      },
-      context: this
-    });
   }
 
   update() {
@@ -218,7 +233,35 @@ class Mover extends Structure {
 
   destroy() {
     this.scene.events.off("preupdate", this.update, this);
-    this.scene.matterCollision.removeOnCollideStart({objectA: [this]})
+
+    super.destroy()
+  }
+}
+
+
+/**
+ * class for barrier spell structure that physically blocks particles and the player
+ */
+class Barrier extends Structure {
+  constructor(scene, x, y, texture, objectConfig){
+    super(scene, x, y, texture, objectConfig)
+    this.age = 0;
+    this.maxAge = 300;
+    this.setTint(0x60fcff);
+
+    this.scene.events.on("preupdate", this.update, this);
+  }
+
+  update() {
+    this.age += 1;
+    this.alpha = (this.maxAge - this.age)/this.maxAge;
+    if(this.age > this.maxAge) {
+      this.destroy()
+    }
+  }
+
+  destroy() {
+    this.scene.events.off("preupdate", this.update, this);
     super.destroy()
   }
 }

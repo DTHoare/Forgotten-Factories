@@ -6,10 +6,8 @@
 class Projectile extends Phaser.Physics.Matter.Image{
 
   constructor(scene, x, y, texture){
-    if (scene instanceof Phaser.Scene) {
-      scene = scene.matter.world;
-    }
-    super(scene, x, y, texture);
+    super(scene.matter.world, x, y, texture);
+    this.scene = scene
     this.age = 0;
     this.maxAge = 200;
     this.maxVelocity = 10.;
@@ -21,6 +19,18 @@ class Projectile extends Phaser.Physics.Matter.Image{
     this.setCollidesWith([collision_block]);
     this.setBounce(0.8);
     this.setTint(0x60fcff);
+    this.scene.events.on("update", this.update, this)
+    this.scene.events.on("shutdown", this.destroy, this);
+    this.scene.events.on("destroy", this.destroy, this);
+
+  }
+
+  destroy() {
+    this.destroyed = true
+    this.scene.events.off("update", this.update, this)
+    this.scene.events.off("shutdown", this.destroy, this);
+    this.scene.events.off("destroy", this.destroy, this);
+    super.destroy()
   }
 
 
@@ -28,11 +38,13 @@ class Projectile extends Phaser.Physics.Matter.Image{
    * update - increase object age, and adjust colour accordinly. Limit speed.
    */
   update() {
+    if (this.age > this.maxAge) {
+      this.destroy()
+    }
+    if (this.destroyed) {
+      return;
+    }
     this.age ++;
-    var colorValue = Math.round(255.*(1.- (this.age/this.maxAge)));
-    var hex = Phaser.Display.Color.RGBToString(colorValue, colorValue, colorValue, 255, "0x");
-    //this.setTint(hex);
-    this.setTint(0x60fcff);
     this.setAlpha(1.- (this.age/ (this.maxAge-1)) );
     this.limitSpeed();
   }
@@ -75,13 +87,10 @@ class Projectile_Teleport extends Projectile{
          radius: 16
      });
      this.setCollisionCategory([collision_ghost])
-     this.setCollidesWith([collision_block,collision_blockPhysical]);
+     this.setCollidesWith([collision_block,collision_blockPhysical,collision_particle]);
      this.setBounce(0.0);
      this.setTint(0x60fcff);
      this.fail = false;
-
-     this.scene.events.on("shutdown", this.destroy, this);
-     this.scene.events.on("destroy", this.destroy, this);
 
      //manually handle collisions as two effects need to happen in order
      // First: check if colliding with a blockPhysical to set FAIL
@@ -89,6 +98,23 @@ class Projectile_Teleport extends Projectile{
      scene.matter.world.on("collisionstart", this.checkCollisions, this);
 
      scene.matter.world.on("beforeupdate", function() {this.fail = false;}, this);
+  }
+
+  update() {
+    if (this.age > this.maxAge) {
+      if(!this.fail) {
+        player.setX(this.x);
+        player.setY(this.y);
+        player.setVelocityX(this.body.velocity.x);
+        player.setVelocityY(this.body.velocity.y);
+      }
+
+      this.scene.focusPlayer();
+      this.scene.focus = player;
+    }
+
+
+    super.update()
   }
 
   checkCollisions(event) {
@@ -130,14 +156,15 @@ class Projectile_Teleport extends Projectile{
         }
 
       }
+      if(otherBody.gameObject.isLethal) {
+        player.death(this.x, this.y)
+        this.fail = true;
+        this.age = this.maxAge +1 ;
+      }
     });
   }
 
   destroy() {
-
-    // Event listeners
-    this.scene.events.off("shutdown", this.destroy, this);
-    this.scene.events.off("destroy", this.destroy, this);
 
     if (this.scene.matter.world) {
       this.scene.matter.world.off("collisionstart", this.checkCollisions, this);
@@ -290,4 +317,44 @@ class Projectile_Bubble_Ghost extends Projectile_Bubble{
     //override and do nothing
   }
 
+}
+
+class Projectile_emitted extends Projectile{
+  constructor(scene, x, y, texture, objectConfig){
+    super(scene, x, y, texture);
+    this.isLethal = true;
+    this.maxVelocity = 6;
+
+    this.properties = {
+      "angle": 0,
+      "force": 0,
+      "lifetime": 100,
+      "period": 100,
+      "size": 10
+    };
+
+    for (var i = 0; i < objectConfig.properties.length; i++){
+      var key = objectConfig.properties[i];
+      this.properties[key["name"]] = key["value"];
+    }
+    this.displayWidth = this.properties["size"]*2.
+    this.displayHeight = this.properties["size"]*2.
+    this.setBody({
+         type: 'circle',
+         radius: this.properties["size"]-2
+    });
+
+
+    this.setCollisionCategory(collision_particle);
+    this.setCollidesWith([collision_block, collision_player, collision_ghost]);
+    this.setBounce(0.8);
+    this.setTint(0x6d0000)
+
+    this.maxAge = this.properties["lifetime"]
+    this.applyForce({
+      x: this.properties["force"]*Math.cos(this.properties["angle"]*Math.PI/180.),
+      y: this.properties["force"]*Math.sin(this.properties["angle"]*Math.PI/180.)
+    })
+
+  }
 }
