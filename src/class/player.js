@@ -3,7 +3,7 @@
  * The player is the playable character, contains state information and interaction
  * TODO: Rework to include controls as well?
  */
-class Player extends Phaser.Physics.Matter.Image{
+class Player extends Phaser.Physics.Matter.Sprite{
 
     /**
      * constructor - Create the player through the Matter Image constructor
@@ -17,10 +17,27 @@ class Player extends Phaser.Physics.Matter.Image{
      * @param  {type} texture image texture from texture manager
      */
     constructor(scene, x, y, texture){
-        super(scene.matter.world, x, y, texture);
+        super(scene.matter.world, x, y, texture, 0);
         this.scene = scene;
+        this.texture = texture;
+
+        const anims = scene.anims;
+        anims.create({
+          key: "player-idle",
+          frames: anims.generateFrameNumbers(texture, { start: 0, end: 0 }),
+          frameRate: 3,
+          repeat: -1
+        });
+        anims.create({
+          key: "player-run",
+          frames: anims.generateFrameNumbers(texture, { start: 0, end: 3 }),
+          frameRate: 12,
+          repeat: -1
+        });
+
         this.state = new PlayerState();
         this.resetPosition = {x:x, y:y}
+        this.maxVelocity = 20.
         //this.setCollisionCategory(collision_player);
         //this.setCollidesWith([collision_block, collision_blockPhysical, collision_interactive]);
         this.currentInteractive = null;
@@ -30,14 +47,14 @@ class Player extends Phaser.Physics.Matter.Image{
         const { width: w, height: h } = this;
 
         //set up the player body and sensors
-        const mainBody = Bodies.rectangle(0, 0, w * 0.85, h, { chamfer: { radius: 3 } });
+        this.mainBody = Bodies.rectangle(0, 0, w * 0.85, h, { chamfer: { radius: 3 } });
         this.sensors = {
           bottom: Bodies.rectangle(0, h * 0.5, w * 0.7, 4, { isSensor: true }),
           left: Bodies.rectangle(-w * 0.45, 0, 6, h * 0.2, { isSensor: true }),
           right: Bodies.rectangle(w * 0.45, 0, 6, h * 0.2, { isSensor: true })
         };
         const compoundBody = Body.create({
-          parts: [mainBody, this.sensors.bottom, this.sensors.left, this.sensors.right],
+          parts: [this.mainBody, this.sensors.bottom, this.sensors.left, this.sensors.right],
           frictionStatic: 0.1,
           frictionAir: 0.02,
           friction: 0.1
@@ -54,7 +71,7 @@ class Player extends Phaser.Physics.Matter.Image{
 
         //reset collision information each tick
         this.isTouching = { left: false, right: false, ground: false };
-        scene.matter.world.on("beforeupdate", this.reset, this);
+        scene.events.on("preupdate", this.reset, this);
 
         //collision events for the sensors to prevent wall interaction
         scene.matterCollision.addOnCollideStart({
@@ -91,7 +108,7 @@ class Player extends Phaser.Physics.Matter.Image{
         });
 
         scene.matterCollision.addOnCollideStart({
-          objectA: this,
+          objectA: this.mainBody,
           callback: function(eventData) {
             const { bodyB, gameObjectB, pair} = eventData;
             if(gameObjectB instanceof Checkpoint) {
@@ -106,20 +123,46 @@ class Player extends Phaser.Physics.Matter.Image{
           context: this
         });
 
+        this.scene.events.on("postupdate", this.update, this)
         this.scene.events.on("shutdown", this.destroy, this);
         this.scene.events.on("destroy", this.destroy, this);
     }
 
     destroy() {
       this.destroyed = true;
+      this.scene.events.off("update", this.update, this)
       this.scene.events.off("shutdown", this.destroy, this);
       this.scene.events.off("destroy", this.destroy, this);
+      this.scene.events.off("preupdate", this.reset, this);
       //this.scene.matter.world.off("beforeupdate", this.reset, this);
 
       this.scene.matterCollision.removeOnCollideStart({objectA: [this.sensors.bottom, this.sensors.left, this.sensors.right]})
       this.scene.matterCollision.removeOnCollideActive({objectA: [this.sensors.bottom, this.sensors.left, this.sensors.right]})
       this.scene.matterCollision.removeOnCollideStart({objectA: this})
       this.scene.matterCollision.removeOnCollideActive({objectA: this})
+    }
+
+    update() {
+      this.anim();
+    }
+
+    anim() {
+      if (this.isTouching.ground) {
+        if (this.body.force.x !== 0) this.anims.play("player-run", true);
+        else this.anims.play("player-idle", true);
+      } else {
+        this.anims.play("player-idle", true);
+        //this.anims.stop();
+        //this.setTexture(this.texture, 0);
+      }
+    }
+
+    limitSpeed() {
+      if(this.body.speed > this.maxVelocity) {
+        var mult = this.maxVelocity / this.body.speed;
+        this.setVelocityX(this.body.velocity.x * mult);
+        this.setVelocityY(this.body.velocity.y * mult);
+      }
     }
 
     death(x, y) {
@@ -223,10 +266,10 @@ class Player extends Phaser.Physics.Matter.Image{
       params.width = Math.sqrt( (startX-endX)**2 + (startY-endY)**2 )
       params.width = Math.min(this.state.charge *1.0, params.width)
       params.rotation = Phaser.Math.Angle.Between(startX, startY, endX, endY) * 180. / Math.PI
-      params.gid = -1 //for processing in Barrier
+      //params.gid = -1 //for processing in Barrier
       params.properties = []
 
-      this.activeBarrier = this.scene.add.existing( new Barrier(this.scene, startX, startY+(params.height/2.), 'door', params) )
+      this.activeBarrier = this.scene.add.existing( new Barrier(this.scene, startX, startY, 'door', params) )
       return this.activeBarrier;
     }
 

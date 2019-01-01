@@ -5,18 +5,22 @@
 class Structure extends Phaser.Physics.Matter.Image{
 
   constructor(scene, x, y, texture, objectConfig){
-    var length = Math.sqrt( objectConfig.width**2 + objectConfig.height**2) /2.
-    var angle = Math.atan(objectConfig.height/objectConfig.width)* 180./Math.PI
-    if (objectConfig.gid !== undefined) {
-      x = x + (length )*Math.cos( (objectConfig.rotation-angle)*Math.PI/180.);
-      y = y + (length )*Math.sin( (objectConfig.rotation-angle)*Math.PI/180.);
-    } else {
+    if (!objectConfig.gid) {
+      var length = Math.sqrt( objectConfig.width**2 + objectConfig.height**2) /2.
+      var angle = Math.atan(objectConfig.height/objectConfig.width)* 180./Math.PI
       x = x + (length )*Math.cos( (objectConfig.rotation+angle)*Math.PI/180.);
       y = y + (length )*Math.sin( (objectConfig.rotation+angle)*Math.PI/180.);
+      super(scene.matter.world, x, y, texture);
+    } else {
+      var length = 16 * 1.414
+      var angle = - 45
+      x = x + (length )*Math.cos( (objectConfig.rotation+angle)*Math.PI/180.);
+      y = y + (length )*Math.sin( (objectConfig.rotation+angle)*Math.PI/180.);
+      super(scene.matter.world, x, y, texture, objectConfig.gid-1);
     }
 
 
-    super(scene.matter.world, x, y, texture);
+    //super(scene.matter.world, x, y, texture);
     this.scene = scene;
     this.destroyed = false;
 
@@ -33,11 +37,13 @@ class Structure extends Phaser.Physics.Matter.Image{
     this.setIgnoreGravity(true)
 
     this.properties = {};
-
-    for (var i = 0; i < objectConfig.properties.length; i++){
-      var key = objectConfig.properties[i];
-      this.properties[key["name"]] = key["value"];
+    if(objectConfig.properties) {
+      for (var i = 0; i < objectConfig.properties.length; i++){
+        var key = objectConfig.properties[i];
+        this.properties[key["name"]] = key["value"];
+      }
     }
+
 
     this.setCollisionCategory(collision_block);
     //this.setCollidesWith([collision_block, collision_player]);
@@ -56,8 +62,8 @@ class Structure extends Phaser.Physics.Matter.Image{
       context: this
     });
 
-    this.scene.events.on("shutdown", this.destroy, this);
-    this.scene.events.on("destroy", this.destroy, this);
+    //this.scene.events.on("shutdown", this.destroy, this);
+    //this.scene.events.on("destroy", this.destroy, this);
   }
 
   destroy() {
@@ -76,19 +82,24 @@ class Door extends Structure {
     this.setStatic(true);
     this.inMotion = 0;
 
-    this.scene.events.on("lever", function(key, moveX, moveY, lever) {
-      if (this.properties["leverKey"] === key) {
-
-        //levers deactivate while motion completes
-        if(this.inMotion) {
-          this.scene.events.emit("cancelLever", lever, key);
-          return 0;
-        }
-        this.activate(moveX, moveY, lever);
-      }
-    }, this);
+    this.scene.events.on("lever", this.leverFunction, this);
 
     this.scene.events.on("preupdate", this.update, this);
+  }
+
+  leverFunction(key, moveX, moveY, lever) {
+    if(this.destroyed) {
+      return;
+    }
+    if (this.properties["leverKey"] === key) {
+
+      //levers deactivate while motion completes
+      if(this.inMotion) {
+        this.scene.events.emit("cancelLever", lever, key);
+        return 0;
+      }
+      this.activate(moveX, moveY, lever);
+    }
   }
 
   /**
@@ -125,7 +136,7 @@ class Door extends Structure {
    * @return {type}  return 1 if not in motion
    */
   update() {
-    if(!this.inMotion) {
+    if(!this.inMotion || this.destroyed) {
       return 1;
     }
 
@@ -133,6 +144,13 @@ class Door extends Structure {
     this.x += this.xMotion;
     this.inMotion -= 1;
 
+  }
+
+  destroy() {
+    this.destroyed = true;
+    this.scene.events.off("lever", this.leverFunction, this);
+    this.scene.events.off("preupdate", this.update, this);
+    super.destroy();
   }
 }
 
@@ -261,6 +279,41 @@ class Barrier extends Structure {
   }
 
   destroy() {
+    this.scene.events.off("preupdate", this.update, this);
+    super.destroy()
+  }
+}
+
+class Breakable extends Structure {
+  constructor(scene, x, y, texture, objectConfig){
+    super(scene, x, y, texture, objectConfig)
+    this.toDestroy;
+
+    this.scene.matterCollision.addOnCollideStart({
+      objectA: this,
+      callback: function(eventData) {
+        const { bodyB, gameObjectB, pair} = eventData;
+        if(gameObjectB.isLethal) {
+          this.toDestroy = gameObjectB
+        }
+      },
+      context: this
+    });
+
+    this.scene.events.on("postupdate", this.breakTile, this);
+  }
+
+  breakTile() {
+    if(this.toDestroy && !this.toDestroy.destroyed) {
+      this.toDestroy.destroy();
+      this.destroy();
+    }
+
+  }
+
+  destroy() {
+    this.scene.events.off("postupdate", this.breakTile, this);
+    this.scene.matterCollision.removeOnCollideStart({objectA: this})
     this.scene.events.off("preupdate", this.update, this);
     super.destroy()
   }

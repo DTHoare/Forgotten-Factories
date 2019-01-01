@@ -16,14 +16,15 @@ class Emitter {
       "force": 0,
       "lifetime": 100,
       "period": 100,
-      "size": 10
+      "size": 10,
+      "age": 0
     };
 
     for (var i = 0; i < objectConfig.properties.length; i++){
       var key = objectConfig.properties[i];
       this.properties[key["name"]] = key["value"];
     }
-
+    this.timer = parseFloat(this.properties["period"]) - parseFloat(this.properties["age"])
     this.scene.events.on("update", this.update, this);
     this.scene.events.on("shutdown", this.destroy, this);
     this.scene.events.on("destroy", this.destroy, this);

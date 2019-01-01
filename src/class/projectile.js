@@ -20,8 +20,8 @@ class Projectile extends Phaser.Physics.Matter.Image{
     this.setBounce(0.8);
     this.setTint(0x60fcff);
     this.scene.events.on("update", this.update, this)
-    this.scene.events.on("shutdown", this.destroy, this);
-    this.scene.events.on("destroy", this.destroy, this);
+    //this.scene.events.on("shutdown", this.destroy, this);
+    //this.scene.events.on("destroy", this.destroy, this);
 
   }
 
@@ -65,7 +65,7 @@ class Projectile extends Phaser.Physics.Matter.Image{
    * @param  {type} angle  angle to cast spell
    */
   init(charge, angle) {
-    var speed = charge / 4.0;
+    var speed = charge / 5.0;
     this.maxAge = charge * 1.3;
     this.setVelocityX(speed*Math.cos(angle));
     this.setVelocityY(speed*Math.sin(angle));
@@ -104,20 +104,29 @@ class Projectile_Teleport extends Projectile{
     if(this.destroyed) {
       return;
     }
+    if(this.body.velocity.x > 0) {
+      this.setFlipX(false)
+    } else {
+      this.setFlipX(true)
+    }
     if (this.age > this.maxAge) {
-      if(!this.fail) {
-        player.setX(this.x);
-        player.setY(this.y);
-        player.setVelocityX(this.body.velocity.x);
-        player.setVelocityY(this.body.velocity.y);
-      }
-
-      this.scene.focusPlayer();
-      this.scene.focus = player;
+      this.teleport()
     }
 
-
     super.update()
+  }
+
+  teleport() {
+    if(!this.fail) {
+      player.setX(this.x);
+      player.setY(this.y);
+      player.setVelocityX(this.body.velocity.x);
+      player.setVelocityY(this.body.velocity.y);
+      player.limitSpeed()
+    }
+
+    this.scene.focusPlayer();
+    this.scene.focus = player;
   }
 
   checkCollisions(event) {
@@ -154,8 +163,11 @@ class Projectile_Teleport extends Projectile{
         //console.log("collide")
         if(this.fail) {
           //console.log("spell fail")
-        } else {
+        } else if (!(otherBody.gameObject instanceof Checkpoint)) {
           this.age = this.maxAge +1 ;
+          //this.destroyed = true
+          //this.body.isStatic = true
+          this.teleport()
         }
 
       }
@@ -164,6 +176,9 @@ class Projectile_Teleport extends Projectile{
         this.destroy()
         this.fail = true;
         this.age = this.maxAge +1 ;
+      }
+      if(otherBody.gameObject instanceof Checkpoint) {
+        player.resetPosition = {x:otherBody.gameObject.x, y:otherBody.gameObject.y}
       }
     });
   }
@@ -334,7 +349,8 @@ class Projectile_emitted extends Projectile{
       "force": 0,
       "lifetime": 100,
       "period": 100,
-      "size": 10
+      "size": 10,
+      "age": 0
     };
 
     for (var i = 0; i < objectConfig.properties.length; i++){
@@ -345,7 +361,7 @@ class Projectile_emitted extends Projectile{
     this.displayHeight = this.properties["size"]*2.
     this.setBody({
          type: 'circle',
-         radius: this.properties["size"]-2
+         radius: this.properties["size"]-3
     });
 
 
@@ -355,10 +371,12 @@ class Projectile_emitted extends Projectile{
     this.setTint(0xfd0000)
 
     this.maxAge = parseFloat(this.properties["lifetime"])
-    this.applyForce({
-      x: this.properties["force"]*Math.cos(this.properties["angle"]*Math.PI/180.),
-      y: this.properties["force"]*Math.sin(this.properties["angle"]*Math.PI/180.)
-    })
+    // this.applyForce({
+    //   x: this.properties["force"]*Math.cos(this.properties["angle"]*Math.PI/180.),
+    //   y: this.properties["force"]*Math.sin(this.properties["angle"]*Math.PI/180.)
+    // })
+    this.setVelocityX(this.properties["force"]*Math.cos(this.properties["angle"]*Math.PI/180.))
+    this.setVelocityY(this.properties["force"]*Math.sin(this.properties["angle"]*Math.PI/180.))
 
   }
 }

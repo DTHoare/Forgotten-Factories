@@ -28,14 +28,14 @@ class Scene_game extends Phaser.Scene {
     this.destroyed = false;
     this.level = data.level
     if (!data.level) {
-      this.level = "4"
+      this.level = "1"
     }
   }
 
   preload () {
     this.load.scenePlugin('Slopes', 'js/phaser-slopes.min.js');
 
-    this.load.image('player', 'assets/mage_placeholder.png');
+    //this.load.image('player', 'assets/mage_placeholder.png');
     this.load.image('platformTile', 'assets/platform_placeholder.png');
     this.load.image('projectile', 'assets/projectile_placeholder.png');
     this.load.image('projectile_large', 'assets/projectile_large_placeholder.png');
@@ -47,13 +47,16 @@ class Scene_game extends Phaser.Scene {
     this.load.tilemapTiledJSON('map2', 'assets/maps/demo_level_2.json');
     this.load.tilemapTiledJSON('map3', 'assets/maps/demo_level_3.json');
     this.load.tilemapTiledJSON('map4', 'assets/maps/demo_level_4.json');
+    this.load.tilemapTiledJSON('map5', 'assets/maps/demo_level_5.json');
+
+    this.load.tilemapTiledJSON('map6', 'assets/maps/demo_level_end.json');
 
     // tiles in spritesheet
     this.load.spritesheet('tiles', 'assets/maps/tiles_placeholder.png', {frameWidth: 32, frameHeight: 32});
+    this.load.spritesheet('player', 'assets/mage_placeholder.png', {frameWidth: 32, frameHeight: 32});
   }
 
   create () {
-    //this.plugins.installScenePlugin('Slopes', 'js/phaser-slopes.min.js', 'slopes');
     //collisions
     collision_player = this.matter.world.nextCategory();
     collision_block = this.matter.world.nextCategory();
@@ -77,6 +80,12 @@ class Scene_game extends Phaser.Scene {
       case "4":
         map = this.make.tilemap({key: 'map4'});
         break;
+      case "5":
+        map = this.make.tilemap({key: 'map5'});
+        break;
+      case "6":
+        map = this.make.tilemap({key: 'map6'});
+        break;
     }
 
 
@@ -90,12 +99,15 @@ class Scene_game extends Phaser.Scene {
       lethalLayer.forEachTile(tile => {
         if (tile.properties.collides) {
           tile.physics.matterBody.setCollisionCategory(collision_block);
+          tile.physics.matterBody.setCollidesWith([collision_player, collision_ghost])
+          tile.physics.matterBody.body.gameObject = tile
           tile.isLethal = true;
         }
 
         tile.tint = 0x0000d6
       });
     }
+
     var barLayer = map.createDynamicLayer('bars', tiles, 0, 0);
     barLayer.setCollisionByProperty({ collides: true });
     this.matter.world.convertTilemapLayer(barLayer);
@@ -108,22 +120,6 @@ class Scene_game extends Phaser.Scene {
     var sceneryLayer = map.createDynamicLayer('scenery', tiles, 0, 0);
     //sceneryLayer.setCollisionByProperty({ collides: true });
     this.matter.world.convertTilemapLayer(sceneryLayer);
-
-    var lethalLayer = map.createDynamicLayer('lethal', tiles, 0, 0);
-    if (lethalLayer) {
-      lethalLayer.setCollisionByProperty({ collides: true });
-      this.matter.world.convertTilemapLayer(lethalLayer);
-
-      lethalLayer.forEachTile(tile => {
-        if (tile.properties.collides) {
-          tile.physics.matterBody.setCollisionCategory(collision_block);
-          tile.isLethal = true;
-        }
-
-        tile.tint = 0x0000d6
-      });
-    }
-
 
     //set collision properties based on tiled properties
     groundLayer.forEachTile(tile => {
@@ -210,6 +206,14 @@ class Scene_game extends Phaser.Scene {
       });
     }
 
+    var breakableLayer = map.getObjectLayer("breakable")
+    if (breakableLayer) {
+      breakableLayer.objects.forEach(breakable => {
+        const { x, y, width, height } = breakable;
+        var breakableBody = this.add.existing(new Breakable(this, x, y, "tiles", breakable));
+      });
+    }
+
 
     // add spawn point and player
     const { x, y } = map.findObject("Spawn", obj => obj.name === "Spawn Point");
@@ -269,6 +273,9 @@ class Scene_game extends Phaser.Scene {
       }
 
       else if(player.state.spell === "barrier") {
+        player.state.charge = 100
+        player.state.mana = 0
+
         var projectile = player.createBarrier(pointer.downX, pointer.downY, pointer.x, pointer.y)
         projectile.body.isSensor = true;
         projectile.setAlpha(0.4)

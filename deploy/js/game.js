@@ -49,14 +49,15 @@ class Emitter {
       "force": 0,
       "lifetime": 100,
       "period": 100,
-      "size": 10
+      "size": 10,
+      "age": 0
     };
 
     for (var i = 0; i < objectConfig.properties.length; i++){
       var key = objectConfig.properties[i];
       this.properties[key["name"]] = key["value"];
     }
-
+    this.timer = parseFloat(this.properties["period"]) - parseFloat(this.properties["age"])
     this.scene.events.on("update", this.update, this);
     this.scene.events.on("shutdown", this.destroy, this);
     this.scene.events.on("destroy", this.destroy, this);
@@ -252,7 +253,7 @@ class Goal extends Interactive{
  * The player is the playable character, contains state information and interaction
  * TODO: Rework to include controls as well?
  */
-class Player extends Phaser.Physics.Matter.Image{
+class Player extends Phaser.Physics.Matter.Sprite{
 
     /**
      * constructor - Create the player through the Matter Image constructor
@@ -266,10 +267,27 @@ class Player extends Phaser.Physics.Matter.Image{
      * @param  {type} texture image texture from texture manager
      */
     constructor(scene, x, y, texture){
-        super(scene.matter.world, x, y, texture);
+        super(scene.matter.world, x, y, texture, 0);
         this.scene = scene;
+        this.texture = texture;
+
+        const anims = scene.anims;
+        anims.create({
+          key: "player-idle",
+          frames: anims.generateFrameNumbers(texture, { start: 0, end: 0 }),
+          frameRate: 3,
+          repeat: -1
+        });
+        anims.create({
+          key: "player-run",
+          frames: anims.generateFrameNumbers(texture, { start: 0, end: 3 }),
+          frameRate: 12,
+          repeat: -1
+        });
+
         this.state = new PlayerState();
         this.resetPosition = {x:x, y:y}
+        this.maxVelocity = 20.
         //this.setCollisionCategory(collision_player);
         //this.setCollidesWith([collision_block, collision_blockPhysical, collision_interactive]);
         this.currentInteractive = null;
@@ -279,14 +297,14 @@ class Player extends Phaser.Physics.Matter.Image{
         const { width: w, height: h } = this;
 
         //set up the player body and sensors
-        const mainBody = Bodies.rectangle(0, 0, w * 0.85, h, { chamfer: { radius: 3 } });
+        this.mainBody = Bodies.rectangle(0, 0, w * 0.85, h, { chamfer: { radius: 3 } });
         this.sensors = {
           bottom: Bodies.rectangle(0, h * 0.5, w * 0.7, 4, { isSensor: true }),
           left: Bodies.rectangle(-w * 0.45, 0, 6, h * 0.2, { isSensor: true }),
           right: Bodies.rectangle(w * 0.45, 0, 6, h * 0.2, { isSensor: true })
         };
         const compoundBody = Body.create({
-          parts: [mainBody, this.sensors.bottom, this.sensors.left, this.sensors.right],
+          parts: [this.mainBody, this.sensors.bottom, this.sensors.left, this.sensors.right],
           frictionStatic: 0.1,
           frictionAir: 0.02,
           friction: 0.1
@@ -303,7 +321,7 @@ class Player extends Phaser.Physics.Matter.Image{
 
         //reset collision information each tick
         this.isTouching = { left: false, right: false, ground: false };
-        scene.matter.world.on("beforeupdate", this.reset, this);
+        scene.events.on("preupdate", this.reset, this);
 
         //collision events for the sensors to prevent wall interaction
         scene.matterCollision.addOnCollideStart({
@@ -340,7 +358,7 @@ class Player extends Phaser.Physics.Matter.Image{
         });
 
         scene.matterCollision.addOnCollideStart({
-          objectA: this,
+          objectA: this.mainBody,
           callback: function(eventData) {
             const { bodyB, gameObjectB, pair} = eventData;
             if(gameObjectB instanceof Checkpoint) {
@@ -355,20 +373,46 @@ class Player extends Phaser.Physics.Matter.Image{
           context: this
         });
 
+        this.scene.events.on("postupdate", this.update, this)
         this.scene.events.on("shutdown", this.destroy, this);
         this.scene.events.on("destroy", this.destroy, this);
     }
 
     destroy() {
       this.destroyed = true;
+      this.scene.events.off("update", this.update, this)
       this.scene.events.off("shutdown", this.destroy, this);
       this.scene.events.off("destroy", this.destroy, this);
+      this.scene.events.off("preupdate", this.reset, this);
       //this.scene.matter.world.off("beforeupdate", this.reset, this);
 
       this.scene.matterCollision.removeOnCollideStart({objectA: [this.sensors.bottom, this.sensors.left, this.sensors.right]})
       this.scene.matterCollision.removeOnCollideActive({objectA: [this.sensors.bottom, this.sensors.left, this.sensors.right]})
       this.scene.matterCollision.removeOnCollideStart({objectA: this})
       this.scene.matterCollision.removeOnCollideActive({objectA: this})
+    }
+
+    update() {
+      this.anim();
+    }
+
+    anim() {
+      if (this.isTouching.ground) {
+        if (this.body.force.x !== 0) this.anims.play("player-run", true);
+        else this.anims.play("player-idle", true);
+      } else {
+        this.anims.play("player-idle", true);
+        //this.anims.stop();
+        //this.setTexture(this.texture, 0);
+      }
+    }
+
+    limitSpeed() {
+      if(this.body.speed > this.maxVelocity) {
+        var mult = this.maxVelocity / this.body.speed;
+        this.setVelocityX(this.body.velocity.x * mult);
+        this.setVelocityY(this.body.velocity.y * mult);
+      }
     }
 
     death(x, y) {
@@ -472,10 +516,10 @@ class Player extends Phaser.Physics.Matter.Image{
       params.width = Math.sqrt( (startX-endX)**2 + (startY-endY)**2 )
       params.width = Math.min(this.state.charge *1.0, params.width)
       params.rotation = Phaser.Math.Angle.Between(startX, startY, endX, endY) * 180. / Math.PI
-      params.gid = -1 //for processing in Barrier
+      //params.gid = -1 //for processing in Barrier
       params.properties = []
 
-      this.activeBarrier = this.scene.add.existing( new Barrier(this.scene, startX, startY+(params.height/2.), 'door', params) )
+      this.activeBarrier = this.scene.add.existing( new Barrier(this.scene, startX, startY, 'door', params) )
       return this.activeBarrier;
     }
 
@@ -609,8 +653,8 @@ class Projectile extends Phaser.Physics.Matter.Image{
     this.setBounce(0.8);
     this.setTint(0x60fcff);
     this.scene.events.on("update", this.update, this)
-    this.scene.events.on("shutdown", this.destroy, this);
-    this.scene.events.on("destroy", this.destroy, this);
+    //this.scene.events.on("shutdown", this.destroy, this);
+    //this.scene.events.on("destroy", this.destroy, this);
 
   }
 
@@ -654,7 +698,7 @@ class Projectile extends Phaser.Physics.Matter.Image{
    * @param  {type} angle  angle to cast spell
    */
   init(charge, angle) {
-    var speed = charge / 4.0;
+    var speed = charge / 5.0;
     this.maxAge = charge * 1.3;
     this.setVelocityX(speed*Math.cos(angle));
     this.setVelocityY(speed*Math.sin(angle));
@@ -693,20 +737,29 @@ class Projectile_Teleport extends Projectile{
     if(this.destroyed) {
       return;
     }
+    if(this.body.velocity.x > 0) {
+      this.setFlipX(false)
+    } else {
+      this.setFlipX(true)
+    }
     if (this.age > this.maxAge) {
-      if(!this.fail) {
-        player.setX(this.x);
-        player.setY(this.y);
-        player.setVelocityX(this.body.velocity.x);
-        player.setVelocityY(this.body.velocity.y);
-      }
-
-      this.scene.focusPlayer();
-      this.scene.focus = player;
+      this.teleport()
     }
 
-
     super.update()
+  }
+
+  teleport() {
+    if(!this.fail) {
+      player.setX(this.x);
+      player.setY(this.y);
+      player.setVelocityX(this.body.velocity.x);
+      player.setVelocityY(this.body.velocity.y);
+      player.limitSpeed()
+    }
+
+    this.scene.focusPlayer();
+    this.scene.focus = player;
   }
 
   checkCollisions(event) {
@@ -743,8 +796,11 @@ class Projectile_Teleport extends Projectile{
         //console.log("collide")
         if(this.fail) {
           //console.log("spell fail")
-        } else {
+        } else if (!(otherBody.gameObject instanceof Checkpoint)) {
           this.age = this.maxAge +1 ;
+          //this.destroyed = true
+          //this.body.isStatic = true
+          this.teleport()
         }
 
       }
@@ -753,6 +809,9 @@ class Projectile_Teleport extends Projectile{
         this.destroy()
         this.fail = true;
         this.age = this.maxAge +1 ;
+      }
+      if(otherBody.gameObject instanceof Checkpoint) {
+        player.resetPosition = {x:otherBody.gameObject.x, y:otherBody.gameObject.y}
       }
     });
   }
@@ -923,7 +982,8 @@ class Projectile_emitted extends Projectile{
       "force": 0,
       "lifetime": 100,
       "period": 100,
-      "size": 10
+      "size": 10,
+      "age": 0
     };
 
     for (var i = 0; i < objectConfig.properties.length; i++){
@@ -934,7 +994,7 @@ class Projectile_emitted extends Projectile{
     this.displayHeight = this.properties["size"]*2.
     this.setBody({
          type: 'circle',
-         radius: this.properties["size"]-2
+         radius: this.properties["size"]-3
     });
 
 
@@ -944,10 +1004,12 @@ class Projectile_emitted extends Projectile{
     this.setTint(0xfd0000)
 
     this.maxAge = parseFloat(this.properties["lifetime"])
-    this.applyForce({
-      x: this.properties["force"]*Math.cos(this.properties["angle"]*Math.PI/180.),
-      y: this.properties["force"]*Math.sin(this.properties["angle"]*Math.PI/180.)
-    })
+    // this.applyForce({
+    //   x: this.properties["force"]*Math.cos(this.properties["angle"]*Math.PI/180.),
+    //   y: this.properties["force"]*Math.sin(this.properties["angle"]*Math.PI/180.)
+    // })
+    this.setVelocityX(this.properties["force"]*Math.cos(this.properties["angle"]*Math.PI/180.))
+    this.setVelocityY(this.properties["force"]*Math.sin(this.properties["angle"]*Math.PI/180.))
 
   }
 }
@@ -1064,14 +1126,14 @@ class Scene_game extends Phaser.Scene {
     this.destroyed = false;
     this.level = data.level
     if (!data.level) {
-      this.level = "4"
+      this.level = "1"
     }
   }
 
   preload () {
     this.load.scenePlugin('Slopes', 'js/phaser-slopes.min.js');
 
-    this.load.image('player', 'assets/mage_placeholder.png');
+    //this.load.image('player', 'assets/mage_placeholder.png');
     this.load.image('platformTile', 'assets/platform_placeholder.png');
     this.load.image('projectile', 'assets/projectile_placeholder.png');
     this.load.image('projectile_large', 'assets/projectile_large_placeholder.png');
@@ -1083,13 +1145,16 @@ class Scene_game extends Phaser.Scene {
     this.load.tilemapTiledJSON('map2', 'assets/maps/demo_level_2.json');
     this.load.tilemapTiledJSON('map3', 'assets/maps/demo_level_3.json');
     this.load.tilemapTiledJSON('map4', 'assets/maps/demo_level_4.json');
+    this.load.tilemapTiledJSON('map5', 'assets/maps/demo_level_5.json');
+
+    this.load.tilemapTiledJSON('map6', 'assets/maps/demo_level_end.json');
 
     // tiles in spritesheet
     this.load.spritesheet('tiles', 'assets/maps/tiles_placeholder.png', {frameWidth: 32, frameHeight: 32});
+    this.load.spritesheet('player', 'assets/mage_placeholder.png', {frameWidth: 32, frameHeight: 32});
   }
 
   create () {
-    //this.plugins.installScenePlugin('Slopes', 'js/phaser-slopes.min.js', 'slopes');
     //collisions
     collision_player = this.matter.world.nextCategory();
     collision_block = this.matter.world.nextCategory();
@@ -1113,6 +1178,12 @@ class Scene_game extends Phaser.Scene {
       case "4":
         map = this.make.tilemap({key: 'map4'});
         break;
+      case "5":
+        map = this.make.tilemap({key: 'map5'});
+        break;
+      case "6":
+        map = this.make.tilemap({key: 'map6'});
+        break;
     }
 
 
@@ -1126,12 +1197,15 @@ class Scene_game extends Phaser.Scene {
       lethalLayer.forEachTile(tile => {
         if (tile.properties.collides) {
           tile.physics.matterBody.setCollisionCategory(collision_block);
+          tile.physics.matterBody.setCollidesWith([collision_player, collision_ghost])
+          tile.physics.matterBody.body.gameObject = tile
           tile.isLethal = true;
         }
 
         tile.tint = 0x0000d6
       });
     }
+
     var barLayer = map.createDynamicLayer('bars', tiles, 0, 0);
     barLayer.setCollisionByProperty({ collides: true });
     this.matter.world.convertTilemapLayer(barLayer);
@@ -1144,22 +1218,6 @@ class Scene_game extends Phaser.Scene {
     var sceneryLayer = map.createDynamicLayer('scenery', tiles, 0, 0);
     //sceneryLayer.setCollisionByProperty({ collides: true });
     this.matter.world.convertTilemapLayer(sceneryLayer);
-
-    var lethalLayer = map.createDynamicLayer('lethal', tiles, 0, 0);
-    if (lethalLayer) {
-      lethalLayer.setCollisionByProperty({ collides: true });
-      this.matter.world.convertTilemapLayer(lethalLayer);
-
-      lethalLayer.forEachTile(tile => {
-        if (tile.properties.collides) {
-          tile.physics.matterBody.setCollisionCategory(collision_block);
-          tile.isLethal = true;
-        }
-
-        tile.tint = 0x0000d6
-      });
-    }
-
 
     //set collision properties based on tiled properties
     groundLayer.forEachTile(tile => {
@@ -1246,6 +1304,14 @@ class Scene_game extends Phaser.Scene {
       });
     }
 
+    var breakableLayer = map.getObjectLayer("breakable")
+    if (breakableLayer) {
+      breakableLayer.objects.forEach(breakable => {
+        const { x, y, width, height } = breakable;
+        var breakableBody = this.add.existing(new Breakable(this, x, y, "tiles", breakable));
+      });
+    }
+
 
     // add spawn point and player
     const { x, y } = map.findObject("Spawn", obj => obj.name === "Spawn Point");
@@ -1305,6 +1371,9 @@ class Scene_game extends Phaser.Scene {
       }
 
       else if(player.state.spell === "barrier") {
+        player.state.charge = 100
+        player.state.mana = 0
+
         var projectile = player.createBarrier(pointer.downX, pointer.downY, pointer.x, pointer.y)
         projectile.body.isSensor = true;
         projectile.setAlpha(0.4)
@@ -1594,18 +1663,22 @@ class Scene_UI extends Phaser.Scene {
 class Structure extends Phaser.Physics.Matter.Image{
 
   constructor(scene, x, y, texture, objectConfig){
-    var length = Math.sqrt( objectConfig.width**2 + objectConfig.height**2) /2.
-    var angle = Math.atan(objectConfig.height/objectConfig.width)* 180./Math.PI
-    if (objectConfig.gid !== undefined) {
-      x = x + (length )*Math.cos( (objectConfig.rotation-angle)*Math.PI/180.);
-      y = y + (length )*Math.sin( (objectConfig.rotation-angle)*Math.PI/180.);
-    } else {
+    if (!objectConfig.gid) {
+      var length = Math.sqrt( objectConfig.width**2 + objectConfig.height**2) /2.
+      var angle = Math.atan(objectConfig.height/objectConfig.width)* 180./Math.PI
       x = x + (length )*Math.cos( (objectConfig.rotation+angle)*Math.PI/180.);
       y = y + (length )*Math.sin( (objectConfig.rotation+angle)*Math.PI/180.);
+      super(scene.matter.world, x, y, texture);
+    } else {
+      var length = 16 * 1.414
+      var angle = - 45
+      x = x + (length )*Math.cos( (objectConfig.rotation+angle)*Math.PI/180.);
+      y = y + (length )*Math.sin( (objectConfig.rotation+angle)*Math.PI/180.);
+      super(scene.matter.world, x, y, texture, objectConfig.gid-1);
     }
 
 
-    super(scene.matter.world, x, y, texture);
+    //super(scene.matter.world, x, y, texture);
     this.scene = scene;
     this.destroyed = false;
 
@@ -1622,11 +1695,13 @@ class Structure extends Phaser.Physics.Matter.Image{
     this.setIgnoreGravity(true)
 
     this.properties = {};
-
-    for (var i = 0; i < objectConfig.properties.length; i++){
-      var key = objectConfig.properties[i];
-      this.properties[key["name"]] = key["value"];
+    if(objectConfig.properties) {
+      for (var i = 0; i < objectConfig.properties.length; i++){
+        var key = objectConfig.properties[i];
+        this.properties[key["name"]] = key["value"];
+      }
     }
+
 
     this.setCollisionCategory(collision_block);
     //this.setCollidesWith([collision_block, collision_player]);
@@ -1645,8 +1720,8 @@ class Structure extends Phaser.Physics.Matter.Image{
       context: this
     });
 
-    this.scene.events.on("shutdown", this.destroy, this);
-    this.scene.events.on("destroy", this.destroy, this);
+    //this.scene.events.on("shutdown", this.destroy, this);
+    //this.scene.events.on("destroy", this.destroy, this);
   }
 
   destroy() {
@@ -1665,19 +1740,24 @@ class Door extends Structure {
     this.setStatic(true);
     this.inMotion = 0;
 
-    this.scene.events.on("lever", function(key, moveX, moveY, lever) {
-      if (this.properties["leverKey"] === key) {
-
-        //levers deactivate while motion completes
-        if(this.inMotion) {
-          this.scene.events.emit("cancelLever", lever, key);
-          return 0;
-        }
-        this.activate(moveX, moveY, lever);
-      }
-    }, this);
+    this.scene.events.on("lever", this.leverFunction, this);
 
     this.scene.events.on("preupdate", this.update, this);
+  }
+
+  leverFunction(key, moveX, moveY, lever) {
+    if(this.destroyed) {
+      return;
+    }
+    if (this.properties["leverKey"] === key) {
+
+      //levers deactivate while motion completes
+      if(this.inMotion) {
+        this.scene.events.emit("cancelLever", lever, key);
+        return 0;
+      }
+      this.activate(moveX, moveY, lever);
+    }
   }
 
   /**
@@ -1714,7 +1794,7 @@ class Door extends Structure {
    * @return {type}  return 1 if not in motion
    */
   update() {
-    if(!this.inMotion) {
+    if(!this.inMotion || this.destroyed) {
       return 1;
     }
 
@@ -1722,6 +1802,13 @@ class Door extends Structure {
     this.x += this.xMotion;
     this.inMotion -= 1;
 
+  }
+
+  destroy() {
+    this.destroyed = true;
+    this.scene.events.off("lever", this.leverFunction, this);
+    this.scene.events.off("preupdate", this.update, this);
+    super.destroy();
   }
 }
 
@@ -1850,6 +1937,41 @@ class Barrier extends Structure {
   }
 
   destroy() {
+    this.scene.events.off("preupdate", this.update, this);
+    super.destroy()
+  }
+}
+
+class Breakable extends Structure {
+  constructor(scene, x, y, texture, objectConfig){
+    super(scene, x, y, texture, objectConfig)
+    this.toDestroy;
+
+    this.scene.matterCollision.addOnCollideStart({
+      objectA: this,
+      callback: function(eventData) {
+        const { bodyB, gameObjectB, pair} = eventData;
+        if(gameObjectB.isLethal) {
+          this.toDestroy = gameObjectB
+        }
+      },
+      context: this
+    });
+
+    this.scene.events.on("postupdate", this.breakTile, this);
+  }
+
+  breakTile() {
+    if(this.toDestroy && !this.toDestroy.destroyed) {
+      this.toDestroy.destroy();
+      this.destroy();
+    }
+
+  }
+
+  destroy() {
+    this.scene.events.off("postupdate", this.breakTile, this);
+    this.scene.matterCollision.removeOnCollideStart({objectA: this})
     this.scene.events.off("preupdate", this.update, this);
     super.destroy()
   }
