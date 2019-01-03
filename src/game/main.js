@@ -33,7 +33,7 @@ var config = {
 };
 
 var game = new Phaser.Game(config);
-game.scene.add('levelEndScene', Scene_levelEnd, false)
+//game.scene.add('levelEndScene', Scene_levelEnd, false)
 
 var player;
 var playerProjectiles = [];

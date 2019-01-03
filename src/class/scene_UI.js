@@ -50,8 +50,11 @@ class Scene_UI extends Phaser.Scene {
      *
      */
     update () {
-      this.manaText.setText("Mana: " + player.state.mana);
-      this.spellText.setText("Spell: " + player.state.spell);
+      if(player) {
+        this.manaText.setText("Mana: " + player.state.mana);
+        this.spellText.setText("Spell: " + player.state.spell);
+      }
+
 
       //for some reason this fixes the text rendering bug in debug mode...
       // but introduces new bug in books?

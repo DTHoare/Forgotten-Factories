@@ -3,7 +3,7 @@
  * Projectiles are small particles that obey physics but do not interact with
  *    eachother. They have a limited lifespan.
  */
-class Projectile extends Phaser.Physics.Matter.Image{
+class Projectile extends Phaser.Physics.Matter.Sprite{
 
   constructor(scene, x, y, texture){
     super(scene.matter.world, x, y, texture);
@@ -28,8 +28,8 @@ class Projectile extends Phaser.Physics.Matter.Image{
   destroy() {
     this.destroyed = true
     this.scene.events.off("update", this.update, this)
-    this.scene.events.off("shutdown", this.destroy, this);
-    this.scene.events.off("destroy", this.destroy, this);
+    //this.scene.events.off("shutdown", this.destroy, this);
+    //this.scene.events.off("destroy", this.destroy, this);
     super.destroy()
   }
 
@@ -38,7 +38,7 @@ class Projectile extends Phaser.Physics.Matter.Image{
    * update - increase object age, and adjust colour accordinly. Limit speed.
    */
   update() {
-    if (this.age > this.maxAge) {
+    if (this.age > this.maxAge && !this.destroyed) {
       this.destroy()
     }
     if (this.destroyed) {
@@ -111,6 +111,13 @@ class Projectile_Teleport extends Projectile{
     }
     if (this.age > this.maxAge) {
       this.teleport()
+    }
+    if (this.body.velocity.y > 0) {
+      this.anims.play("player-fall", true);
+    } else if (this.body.velocity.y < 0) {
+      this.anims.play("player-jump", true);
+    } else {
+      this.anims.play("player-idle", true);
     }
 
     super.update()
@@ -226,6 +233,15 @@ class Particle_ghost extends Projectile{
        context: this
      });
    }
+
+   destroy() {
+     if(this.destroyed) {
+       return;
+     }
+     this.destroyed = true
+     this.scene.matterCollision.removeOnCollideStart({objectA: [this]})
+     super.destroy()
+   }
 }
 
 class Projectile_Ghost extends Particle_ghost{
@@ -243,14 +259,6 @@ class Projectile_Ghost extends Particle_ghost{
      this.setCollisionCategory(collision_ghost);
      this.setCollidesWith([collision_block]);
      this.setMass(0.001);
-  }
-
-  update() {
-    this.age ++;
-    var colorValue = Math.round(255.*(1.- ( (this.age-1)/this.maxAge)));
-    var hex = Phaser.Display.Color.RGBToString(colorValue, colorValue, colorValue, 255, "0x");
-    this.setTint(hex);
-    this.limitSpeed();
   }
 
 }
@@ -378,5 +386,12 @@ class Projectile_emitted extends Projectile{
     this.setVelocityX(this.properties["force"]*Math.cos(this.properties["angle"]*Math.PI/180.))
     this.setVelocityY(this.properties["force"]*Math.sin(this.properties["angle"]*Math.PI/180.))
 
+  }
+
+  destroy() {
+    if(this.destroyed) {
+      return;
+    }
+    super.destroy()
   }
 }

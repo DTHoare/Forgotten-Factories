@@ -36,11 +36,14 @@ class Scene_game extends Phaser.Scene {
     this.load.scenePlugin('Slopes', 'js/phaser-slopes.min.js');
 
     //this.load.image('player', 'assets/mage_placeholder.png');
-    this.load.image('platformTile', 'assets/platform_placeholder.png');
+    //this.load.image('platformTile', 'assets/platform_placeholder.png');
     this.load.image('projectile', 'assets/projectile_placeholder.png');
     this.load.image('projectile_large', 'assets/projectile_large_placeholder.png');
     this.load.image('bubble', 'assets/bubble_placeholder.png');
     this.load.image('door', 'assets/door_placeholder.png');
+
+    this.load.image('bg_outside', 'assets/bg_1.png');
+    this.load.image('bg_inside', 'assets/bg_2.png');
 
     // map made with Tiled in JSON format
     this.load.tilemapTiledJSON('map1', 'assets/maps/demo_level_1.json');
@@ -53,6 +56,8 @@ class Scene_game extends Phaser.Scene {
 
     // tiles in spritesheet
     this.load.spritesheet('tiles', 'assets/maps/tiles_placeholder.png', {frameWidth: 32, frameHeight: 32});
+    this.load.spritesheet('tiles_out', 'assets/maps/tiles_outdoors.png', {frameWidth: 32, frameHeight: 32});
+    this.load.spritesheet('tiles_factory', 'assets/maps/tiles_factory.png', {frameWidth: 32, frameHeight: 32});
     this.load.spritesheet('player', 'assets/mage_placeholder.png', {frameWidth: 32, frameHeight: 32});
   }
 
@@ -66,31 +71,51 @@ class Scene_game extends Phaser.Scene {
     collision_interactive = this.matter.world.nextCategory();
 
     var map;
+    var tileSheet;
+    var bg;
     // load the map
     switch (this.level) {
       case "1":
         map = this.make.tilemap({key: 'map1'});
+        tileSheet = "tiles_out"
+        bg = this.add.image(480, 360, 'bg_outside');
         break;
       case "2":
         map = this.make.tilemap({key: 'map2'});
+        tileSheet = "tiles_out"
+        bg = this.add.image(480, 360, 'bg_outside');
         break;
       case "3":
         map = this.make.tilemap({key: 'map3'});
+        tileSheet = "tiles_factory"
+        bg = this.add.image(480, 360, 'bg_inside');
         break;
       case "4":
         map = this.make.tilemap({key: 'map4'});
+        tileSheet = "tiles_factory"
+        bg = this.add.image(480, 360, 'bg_inside');
         break;
       case "5":
         map = this.make.tilemap({key: 'map5'});
+        tileSheet = "tiles_factory"
+        bg = this.add.image(480, 360, 'bg_inside');
         break;
       case "6":
         map = this.make.tilemap({key: 'map6'});
+        tileSheet = "tiles_factory"
+        bg = this.add.image(480, 360, 'bg_inside');
         break;
     }
+    bg.setScrollFactor(0)
 
+    var tiles = map.addTilesetImage('Tiles',tileSheet);
 
-    // tiles for the ground layer
-    var tiles = map.addTilesetImage('Tiles','tiles');
+    var bgLayer = map.createDynamicLayer('bg', tiles, 0, 0);
+    //groundLayer.setCollisionByProperty({ collides: true });
+    if(bgLayer) {
+      this.matter.world.convertTilemapLayer(bgLayer);
+    }
+
     var lethalLayer = map.createDynamicLayer('lethal', tiles, 0, 0);
     if (lethalLayer) {
       lethalLayer.setCollisionByProperty({ collides: true });
@@ -104,7 +129,7 @@ class Scene_game extends Phaser.Scene {
           tile.isLethal = true;
         }
 
-        tile.tint = 0x0000d6
+        //tile.tint = 0x0000d6
       });
     }
 
@@ -150,7 +175,7 @@ class Scene_game extends Phaser.Scene {
         // Tiled origin for its coordinate system is (0, 1), but we want coordinates relative to an
         // origin of (0.5, 0.5)
         var bookBody = this.add
-          .existing(new Book(this, x, y, "tiles", 40, book));
+          .existing(new Book(this, x, y, tileSheet, 40, book));
 
         this.books[this.books.length] = bookBody;
       });
@@ -161,7 +186,7 @@ class Scene_game extends Phaser.Scene {
       leverLayer.objects.forEach(lever => {
         const { x, y, width, height } = lever;
         var leverBody = this.add
-          .existing(new Lever(this, x, y, "tiles", 41, lever));
+          .existing(new Lever(this, x, y, tileSheet, 41, lever));
       });
     }
 
@@ -188,7 +213,7 @@ class Scene_game extends Phaser.Scene {
       goalLayer.objects.forEach(goal => {
         const { x, y, width, height } = goal;
         var goalBody = this.add
-          .existing(new Goal(this, x, y, "tiles", 42, goal));
+          .existing(new Goal(this, x, y, tileSheet, 42, goal));
       });
     }
 
@@ -210,7 +235,7 @@ class Scene_game extends Phaser.Scene {
     if (breakableLayer) {
       breakableLayer.objects.forEach(breakable => {
         const { x, y, width, height } = breakable;
-        var breakableBody = this.add.existing(new Breakable(this, x, y, "tiles", breakable));
+        var breakableBody = this.add.existing(new Breakable(this, x, y, tileSheet, breakable));
       });
     }
 
@@ -291,13 +316,13 @@ class Scene_game extends Phaser.Scene {
     var pointer = game.input.activePointer
     if (pointer.justUp) {
       //remove ghost particles
-      for (var i = playerProjectiles.length-1; i >= 0; i--) {
-        playerProjectiles[i].update();
-        if ( playerProjectiles[i] instanceof Projectile_Ghost) {
-          playerProjectiles[i].destroy();
-          playerProjectiles.splice(i,1);
-        }
-      }
+      // for (var i = playerProjectiles.length-1; i >= 0; i--) {
+      //   playerProjectiles[i].update();
+      //   if ( playerProjectiles[i] instanceof Projectile_Ghost) {
+      //     playerProjectiles[i].destroy();
+      //     playerProjectiles.splice(i,1);
+      //   }
+      // }
 
       //cast the current spell
       var angle = Phaser.Math.Angle.Between(player.x, player.y, pointer.x + this.cameras.main.scrollX, pointer.y + this.cameras.main.scrollY);
@@ -337,6 +362,7 @@ class Scene_game extends Phaser.Scene {
         projectile.init(player.state.charge, angle);
         projectile.maxAge = 50;
 
+        Phaser.Physics.Matter.Matter.Body.update(projectile.body, 16.67, 1, 1);
         for (var i = 0; i < 15; i++) {
 
           this.trail[this.trail.length] = this.add.image(projectile.x, projectile.y, 'projectile_large');
@@ -348,7 +374,9 @@ class Scene_game extends Phaser.Scene {
           Phaser.Physics.Matter.Matter.Body.update(projectile.body, 16.67, 1, 1);
           projectile.limitSpeed();
         }
+        //this fixes a not defined bug?
         projectile.destroy();
+
       }
 
       //change player direction to face the cursor for aiming

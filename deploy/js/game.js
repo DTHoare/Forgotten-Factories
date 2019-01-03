@@ -284,6 +284,18 @@ class Player extends Phaser.Physics.Matter.Sprite{
           frameRate: 12,
           repeat: -1
         });
+        anims.create({
+          key: "player-fall",
+          frames: anims.generateFrameNumbers(texture, { start: 4, end: 7 }),
+          frameRate: 12,
+          repeat: -1
+        });
+        anims.create({
+          key: "player-jump",
+          frames: anims.generateFrameNumbers(texture, { start: 8, end: 11 }),
+          frameRate: 12,
+          repeat: -1
+        });
 
         this.state = new PlayerState();
         this.resetPosition = {x:x, y:y}
@@ -297,11 +309,15 @@ class Player extends Phaser.Physics.Matter.Sprite{
         const { width: w, height: h } = this;
 
         //set up the player body and sensors
-        this.mainBody = Bodies.rectangle(0, 0, w * 0.85, h, { chamfer: { radius: 3 } });
+        //this.mainBody = Bodies.rectangle(0, 0, w * 0.85, h, { chamfer: { radius: 3 } });
+        this.mainBody = Bodies.rectangle(0, 0, w * 0.6, h, { chamfer: { radius: 3 } });
         this.sensors = {
-          bottom: Bodies.rectangle(0, h * 0.5, w * 0.7, 4, { isSensor: true }),
-          left: Bodies.rectangle(-w * 0.45, 0, 6, h * 0.2, { isSensor: true }),
-          right: Bodies.rectangle(w * 0.45, 0, 6, h * 0.2, { isSensor: true })
+          // bottom: Bodies.rectangle(0, h * 0.5, w * 0.7, 4, { isSensor: true }),
+          // left: Bodies.rectangle(-w * 0.45, 0, 6, h * 0.2, { isSensor: true }),
+          // right: Bodies.rectangle(w * 0.45, 0, 6, h * 0.2, { isSensor: true })
+          bottom: Bodies.rectangle(0, h * 0.5, w * 0.6, 4, { isSensor: true }),
+          left: Bodies.rectangle(-w * 0.32, 0, 5, h * 0.2, { isSensor: true }),
+          right: Bodies.rectangle(w * 0.32, 0, 5, h * 0.2, { isSensor: true })
         };
         const compoundBody = Body.create({
           parts: [this.mainBody, this.sensors.bottom, this.sensors.left, this.sensors.right],
@@ -400,7 +416,13 @@ class Player extends Phaser.Physics.Matter.Sprite{
       if (this.isTouching.ground) {
         if (this.body.force.x !== 0) this.anims.play("player-run", true);
         else this.anims.play("player-idle", true);
-      } else {
+      } else if (this.body.velocity.y > 0) {
+        this.anims.play("player-fall", true);
+      } else if (this.body.velocity.y < 0) {
+        this.anims.play("player-jump", true);
+      }
+
+      else {
         this.anims.play("player-idle", true);
         //this.anims.stop();
         //this.setTexture(this.texture, 0);
@@ -473,7 +495,7 @@ class Player extends Phaser.Physics.Matter.Sprite{
     generateParticles() {
       if(this.state.charging) {
         var angle = Math.random() * 2 * Math.PI;
-        var p = new Particle_ghost(this.scene, this.x+this.state.particleSourceX, this.y+this.state.particleSourceY, 'projectile')
+        var p = new Particle_ghost(this.scene, this.x+this.state.particleSourceX*1.2, this.y+this.state.particleSourceY*0.8, 'projectile')
         p.setVelocityX(5*Math.cos(angle));
         p.setVelocityY(5*Math.sin(angle));
         p.maxAge = 25;
@@ -512,7 +534,7 @@ class Player extends Phaser.Physics.Matter.Sprite{
 
       var params = function() {}
 
-      params.height = 16
+      params.height = 22
       params.width = Math.sqrt( (startX-endX)**2 + (startY-endY)**2 )
       params.width = Math.min(this.state.charge *1.0, params.width)
       params.rotation = Phaser.Math.Angle.Between(startX, startY, endX, endY) * 180. / Math.PI
@@ -546,12 +568,12 @@ class Player extends Phaser.Physics.Matter.Sprite{
 
     faceRight() {
       this.state.facing = 'r';
-      this.state.particleSourceX = + 11;
+      this.state.particleSourceX = + 6;
     }
 
     faceLeft() {
       this.state.facing = 'l';
-      this.state.particleSourceX = - 11;
+      this.state.particleSourceX = - 6;
     }
 
     switchSpell() {
@@ -597,8 +619,8 @@ function PlayerState(){
   this.mana = 100;
   this.charge = 0;
   this.facing = 'r';
-  this.particleSourceX = + 11;
-  this.particleSourceY = - 14;
+  this.particleSourceX = + 6;
+  this.particleSourceY = - 3;
   this.spell = 'teleport';
 
   this.startCharge = function(){
@@ -636,7 +658,7 @@ function PlayerState(){
  * Projectiles are small particles that obey physics but do not interact with
  *    eachother. They have a limited lifespan.
  */
-class Projectile extends Phaser.Physics.Matter.Image{
+class Projectile extends Phaser.Physics.Matter.Sprite{
 
   constructor(scene, x, y, texture){
     super(scene.matter.world, x, y, texture);
@@ -661,8 +683,8 @@ class Projectile extends Phaser.Physics.Matter.Image{
   destroy() {
     this.destroyed = true
     this.scene.events.off("update", this.update, this)
-    this.scene.events.off("shutdown", this.destroy, this);
-    this.scene.events.off("destroy", this.destroy, this);
+    //this.scene.events.off("shutdown", this.destroy, this);
+    //this.scene.events.off("destroy", this.destroy, this);
     super.destroy()
   }
 
@@ -671,7 +693,7 @@ class Projectile extends Phaser.Physics.Matter.Image{
    * update - increase object age, and adjust colour accordinly. Limit speed.
    */
   update() {
-    if (this.age > this.maxAge) {
+    if (this.age > this.maxAge && !this.destroyed) {
       this.destroy()
     }
     if (this.destroyed) {
@@ -744,6 +766,13 @@ class Projectile_Teleport extends Projectile{
     }
     if (this.age > this.maxAge) {
       this.teleport()
+    }
+    if (this.body.velocity.y > 0) {
+      this.anims.play("player-fall", true);
+    } else if (this.body.velocity.y < 0) {
+      this.anims.play("player-jump", true);
+    } else {
+      this.anims.play("player-idle", true);
     }
 
     super.update()
@@ -859,6 +888,15 @@ class Particle_ghost extends Projectile{
        context: this
      });
    }
+
+   destroy() {
+     if(this.destroyed) {
+       return;
+     }
+     this.destroyed = true
+     this.scene.matterCollision.removeOnCollideStart({objectA: [this]})
+     super.destroy()
+   }
 }
 
 class Projectile_Ghost extends Particle_ghost{
@@ -876,14 +914,6 @@ class Projectile_Ghost extends Particle_ghost{
      this.setCollisionCategory(collision_ghost);
      this.setCollidesWith([collision_block]);
      this.setMass(0.001);
-  }
-
-  update() {
-    this.age ++;
-    var colorValue = Math.round(255.*(1.- ( (this.age-1)/this.maxAge)));
-    var hex = Phaser.Display.Color.RGBToString(colorValue, colorValue, colorValue, 255, "0x");
-    this.setTint(hex);
-    this.limitSpeed();
   }
 
 }
@@ -1012,6 +1042,13 @@ class Projectile_emitted extends Projectile{
     this.setVelocityY(this.properties["force"]*Math.sin(this.properties["angle"]*Math.PI/180.))
 
   }
+
+  destroy() {
+    if(this.destroyed) {
+      return;
+    }
+    super.destroy()
+  }
 }
 
 
@@ -1134,11 +1171,14 @@ class Scene_game extends Phaser.Scene {
     this.load.scenePlugin('Slopes', 'js/phaser-slopes.min.js');
 
     //this.load.image('player', 'assets/mage_placeholder.png');
-    this.load.image('platformTile', 'assets/platform_placeholder.png');
+    //this.load.image('platformTile', 'assets/platform_placeholder.png');
     this.load.image('projectile', 'assets/projectile_placeholder.png');
     this.load.image('projectile_large', 'assets/projectile_large_placeholder.png');
     this.load.image('bubble', 'assets/bubble_placeholder.png');
     this.load.image('door', 'assets/door_placeholder.png');
+
+    this.load.image('bg_outside', 'assets/bg_1.png');
+    this.load.image('bg_inside', 'assets/bg_2.png');
 
     // map made with Tiled in JSON format
     this.load.tilemapTiledJSON('map1', 'assets/maps/demo_level_1.json');
@@ -1151,6 +1191,8 @@ class Scene_game extends Phaser.Scene {
 
     // tiles in spritesheet
     this.load.spritesheet('tiles', 'assets/maps/tiles_placeholder.png', {frameWidth: 32, frameHeight: 32});
+    this.load.spritesheet('tiles_out', 'assets/maps/tiles_outdoors.png', {frameWidth: 32, frameHeight: 32});
+    this.load.spritesheet('tiles_factory', 'assets/maps/tiles_factory.png', {frameWidth: 32, frameHeight: 32});
     this.load.spritesheet('player', 'assets/mage_placeholder.png', {frameWidth: 32, frameHeight: 32});
   }
 
@@ -1164,31 +1206,51 @@ class Scene_game extends Phaser.Scene {
     collision_interactive = this.matter.world.nextCategory();
 
     var map;
+    var tileSheet;
+    var bg;
     // load the map
     switch (this.level) {
       case "1":
         map = this.make.tilemap({key: 'map1'});
+        tileSheet = "tiles_out"
+        bg = this.add.image(480, 360, 'bg_outside');
         break;
       case "2":
         map = this.make.tilemap({key: 'map2'});
+        tileSheet = "tiles_out"
+        bg = this.add.image(480, 360, 'bg_outside');
         break;
       case "3":
         map = this.make.tilemap({key: 'map3'});
+        tileSheet = "tiles_factory"
+        bg = this.add.image(480, 360, 'bg_inside');
         break;
       case "4":
         map = this.make.tilemap({key: 'map4'});
+        tileSheet = "tiles_factory"
+        bg = this.add.image(480, 360, 'bg_inside');
         break;
       case "5":
         map = this.make.tilemap({key: 'map5'});
+        tileSheet = "tiles_factory"
+        bg = this.add.image(480, 360, 'bg_inside');
         break;
       case "6":
         map = this.make.tilemap({key: 'map6'});
+        tileSheet = "tiles_factory"
+        bg = this.add.image(480, 360, 'bg_inside');
         break;
     }
+    bg.setScrollFactor(0)
 
+    var tiles = map.addTilesetImage('Tiles',tileSheet);
 
-    // tiles for the ground layer
-    var tiles = map.addTilesetImage('Tiles','tiles');
+    var bgLayer = map.createDynamicLayer('bg', tiles, 0, 0);
+    //groundLayer.setCollisionByProperty({ collides: true });
+    if(bgLayer) {
+      this.matter.world.convertTilemapLayer(bgLayer);
+    }
+
     var lethalLayer = map.createDynamicLayer('lethal', tiles, 0, 0);
     if (lethalLayer) {
       lethalLayer.setCollisionByProperty({ collides: true });
@@ -1202,7 +1264,7 @@ class Scene_game extends Phaser.Scene {
           tile.isLethal = true;
         }
 
-        tile.tint = 0x0000d6
+        //tile.tint = 0x0000d6
       });
     }
 
@@ -1248,7 +1310,7 @@ class Scene_game extends Phaser.Scene {
         // Tiled origin for its coordinate system is (0, 1), but we want coordinates relative to an
         // origin of (0.5, 0.5)
         var bookBody = this.add
-          .existing(new Book(this, x, y, "tiles", 40, book));
+          .existing(new Book(this, x, y, tileSheet, 40, book));
 
         this.books[this.books.length] = bookBody;
       });
@@ -1259,7 +1321,7 @@ class Scene_game extends Phaser.Scene {
       leverLayer.objects.forEach(lever => {
         const { x, y, width, height } = lever;
         var leverBody = this.add
-          .existing(new Lever(this, x, y, "tiles", 41, lever));
+          .existing(new Lever(this, x, y, tileSheet, 41, lever));
       });
     }
 
@@ -1286,7 +1348,7 @@ class Scene_game extends Phaser.Scene {
       goalLayer.objects.forEach(goal => {
         const { x, y, width, height } = goal;
         var goalBody = this.add
-          .existing(new Goal(this, x, y, "tiles", 42, goal));
+          .existing(new Goal(this, x, y, tileSheet, 42, goal));
       });
     }
 
@@ -1308,7 +1370,7 @@ class Scene_game extends Phaser.Scene {
     if (breakableLayer) {
       breakableLayer.objects.forEach(breakable => {
         const { x, y, width, height } = breakable;
-        var breakableBody = this.add.existing(new Breakable(this, x, y, "tiles", breakable));
+        var breakableBody = this.add.existing(new Breakable(this, x, y, tileSheet, breakable));
       });
     }
 
@@ -1389,13 +1451,13 @@ class Scene_game extends Phaser.Scene {
     var pointer = game.input.activePointer
     if (pointer.justUp) {
       //remove ghost particles
-      for (var i = playerProjectiles.length-1; i >= 0; i--) {
-        playerProjectiles[i].update();
-        if ( playerProjectiles[i] instanceof Projectile_Ghost) {
-          playerProjectiles[i].destroy();
-          playerProjectiles.splice(i,1);
-        }
-      }
+      // for (var i = playerProjectiles.length-1; i >= 0; i--) {
+      //   playerProjectiles[i].update();
+      //   if ( playerProjectiles[i] instanceof Projectile_Ghost) {
+      //     playerProjectiles[i].destroy();
+      //     playerProjectiles.splice(i,1);
+      //   }
+      // }
 
       //cast the current spell
       var angle = Phaser.Math.Angle.Between(player.x, player.y, pointer.x + this.cameras.main.scrollX, pointer.y + this.cameras.main.scrollY);
@@ -1435,6 +1497,7 @@ class Scene_game extends Phaser.Scene {
         projectile.init(player.state.charge, angle);
         projectile.maxAge = 50;
 
+        Phaser.Physics.Matter.Matter.Body.update(projectile.body, 16.67, 1, 1);
         for (var i = 0; i < 15; i++) {
 
           this.trail[this.trail.length] = this.add.image(projectile.x, projectile.y, 'projectile_large');
@@ -1446,7 +1509,9 @@ class Scene_game extends Phaser.Scene {
           Phaser.Physics.Matter.Matter.Body.update(projectile.body, 16.67, 1, 1);
           projectile.limitSpeed();
         }
+        //this fixes a not defined bug?
         projectile.destroy();
+
       }
 
       //change player direction to face the cursor for aiming
@@ -1642,8 +1707,11 @@ class Scene_UI extends Phaser.Scene {
      *
      */
     update () {
-      this.manaText.setText("Mana: " + player.state.mana);
-      this.spellText.setText("Spell: " + player.state.spell);
+      if(player) {
+        this.manaText.setText("Mana: " + player.state.mana);
+        this.spellText.setText("Spell: " + player.state.spell);
+      }
+
 
       //for some reason this fixes the text rendering bug in debug mode...
       // but introduces new bug in books?
@@ -2012,7 +2080,7 @@ var config = {
 };
 
 var game = new Phaser.Game(config);
-game.scene.add('levelEndScene', Scene_levelEnd, false)
+//game.scene.add('levelEndScene', Scene_levelEnd, false)
 
 var player;
 var playerProjectiles = [];

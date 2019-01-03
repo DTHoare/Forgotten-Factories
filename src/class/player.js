@@ -34,6 +34,18 @@ class Player extends Phaser.Physics.Matter.Sprite{
           frameRate: 12,
           repeat: -1
         });
+        anims.create({
+          key: "player-fall",
+          frames: anims.generateFrameNumbers(texture, { start: 4, end: 7 }),
+          frameRate: 12,
+          repeat: -1
+        });
+        anims.create({
+          key: "player-jump",
+          frames: anims.generateFrameNumbers(texture, { start: 8, end: 11 }),
+          frameRate: 12,
+          repeat: -1
+        });
 
         this.state = new PlayerState();
         this.resetPosition = {x:x, y:y}
@@ -47,11 +59,15 @@ class Player extends Phaser.Physics.Matter.Sprite{
         const { width: w, height: h } = this;
 
         //set up the player body and sensors
-        this.mainBody = Bodies.rectangle(0, 0, w * 0.85, h, { chamfer: { radius: 3 } });
+        //this.mainBody = Bodies.rectangle(0, 0, w * 0.85, h, { chamfer: { radius: 3 } });
+        this.mainBody = Bodies.rectangle(0, 0, w * 0.6, h, { chamfer: { radius: 3 } });
         this.sensors = {
-          bottom: Bodies.rectangle(0, h * 0.5, w * 0.7, 4, { isSensor: true }),
-          left: Bodies.rectangle(-w * 0.45, 0, 6, h * 0.2, { isSensor: true }),
-          right: Bodies.rectangle(w * 0.45, 0, 6, h * 0.2, { isSensor: true })
+          // bottom: Bodies.rectangle(0, h * 0.5, w * 0.7, 4, { isSensor: true }),
+          // left: Bodies.rectangle(-w * 0.45, 0, 6, h * 0.2, { isSensor: true }),
+          // right: Bodies.rectangle(w * 0.45, 0, 6, h * 0.2, { isSensor: true })
+          bottom: Bodies.rectangle(0, h * 0.5, w * 0.6, 4, { isSensor: true }),
+          left: Bodies.rectangle(-w * 0.32, 0, 5, h * 0.2, { isSensor: true }),
+          right: Bodies.rectangle(w * 0.32, 0, 5, h * 0.2, { isSensor: true })
         };
         const compoundBody = Body.create({
           parts: [this.mainBody, this.sensors.bottom, this.sensors.left, this.sensors.right],
@@ -150,7 +166,13 @@ class Player extends Phaser.Physics.Matter.Sprite{
       if (this.isTouching.ground) {
         if (this.body.force.x !== 0) this.anims.play("player-run", true);
         else this.anims.play("player-idle", true);
-      } else {
+      } else if (this.body.velocity.y > 0) {
+        this.anims.play("player-fall", true);
+      } else if (this.body.velocity.y < 0) {
+        this.anims.play("player-jump", true);
+      }
+
+      else {
         this.anims.play("player-idle", true);
         //this.anims.stop();
         //this.setTexture(this.texture, 0);
@@ -223,7 +245,7 @@ class Player extends Phaser.Physics.Matter.Sprite{
     generateParticles() {
       if(this.state.charging) {
         var angle = Math.random() * 2 * Math.PI;
-        var p = new Particle_ghost(this.scene, this.x+this.state.particleSourceX, this.y+this.state.particleSourceY, 'projectile')
+        var p = new Particle_ghost(this.scene, this.x+this.state.particleSourceX*1.2, this.y+this.state.particleSourceY*0.8, 'projectile')
         p.setVelocityX(5*Math.cos(angle));
         p.setVelocityY(5*Math.sin(angle));
         p.maxAge = 25;
@@ -262,7 +284,7 @@ class Player extends Phaser.Physics.Matter.Sprite{
 
       var params = function() {}
 
-      params.height = 16
+      params.height = 22
       params.width = Math.sqrt( (startX-endX)**2 + (startY-endY)**2 )
       params.width = Math.min(this.state.charge *1.0, params.width)
       params.rotation = Phaser.Math.Angle.Between(startX, startY, endX, endY) * 180. / Math.PI
@@ -296,12 +318,12 @@ class Player extends Phaser.Physics.Matter.Sprite{
 
     faceRight() {
       this.state.facing = 'r';
-      this.state.particleSourceX = + 11;
+      this.state.particleSourceX = + 6;
     }
 
     faceLeft() {
       this.state.facing = 'l';
-      this.state.particleSourceX = - 11;
+      this.state.particleSourceX = - 6;
     }
 
     switchSpell() {
@@ -347,8 +369,8 @@ function PlayerState(){
   this.mana = 100;
   this.charge = 0;
   this.facing = 'r';
-  this.particleSourceX = + 11;
-  this.particleSourceY = - 14;
+  this.particleSourceX = + 6;
+  this.particleSourceY = - 3;
   this.spell = 'teleport';
 
   this.startCharge = function(){
