@@ -21,7 +21,7 @@ var config = {
           mapping: "matterCollision" // Where to store in the Scene, e.g. scene.matterCollision
         }]
     },
-   scene: [ Scene_game, Scene_UI],
+   scene: []//[ Scene_game, Scene_UI],
 
    // callbacks: {
    //    postBoot() {
@@ -33,7 +33,8 @@ var config = {
 };
 
 var game = new Phaser.Game(config);
-//game.scene.add('levelEndScene', Scene_levelEnd, false)
+game.scene.add('Loading', new Scene_loading(), true)
+
 
 var player;
 var playerProjectiles = [];

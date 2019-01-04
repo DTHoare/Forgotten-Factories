@@ -9,9 +9,6 @@ class Scene_game extends Phaser.Scene {
     super('GameScene');
     this.books = [];
     this.trail = [];
-    // if (!this.sys.settings.data.level) {
-    //   this.sys.settings.data.level = 1;
-    // }
   }
 
   focusPlayer() {
@@ -32,34 +29,47 @@ class Scene_game extends Phaser.Scene {
     }
   }
 
-  preload () {
-    this.load.scenePlugin('Slopes', 'js/phaser-slopes.min.js');
-
-    //this.load.image('player', 'assets/mage_placeholder.png');
-    //this.load.image('platformTile', 'assets/platform_placeholder.png');
-    this.load.image('projectile', 'assets/projectile_placeholder.png');
-    this.load.image('projectile_large', 'assets/projectile_large_placeholder.png');
-    this.load.image('bubble', 'assets/bubble_placeholder.png');
-    this.load.image('door', 'assets/door_placeholder.png');
-
-    this.load.image('bg_outside', 'assets/bg_1.png');
-    this.load.image('bg_inside', 'assets/bg_2.png');
-
-    // map made with Tiled in JSON format
-    this.load.tilemapTiledJSON('map1', 'assets/maps/demo_level_1.json');
-    this.load.tilemapTiledJSON('map2', 'assets/maps/demo_level_2.json');
-    this.load.tilemapTiledJSON('map3', 'assets/maps/demo_level_3.json');
-    this.load.tilemapTiledJSON('map4', 'assets/maps/demo_level_4.json');
-    this.load.tilemapTiledJSON('map5', 'assets/maps/demo_level_5.json');
-
-    this.load.tilemapTiledJSON('map6', 'assets/maps/demo_level_end.json');
-
-    // tiles in spritesheet
-    this.load.spritesheet('tiles', 'assets/maps/tiles_placeholder.png', {frameWidth: 32, frameHeight: 32});
-    this.load.spritesheet('tiles_out', 'assets/maps/tiles_outdoors.png', {frameWidth: 32, frameHeight: 32});
-    this.load.spritesheet('tiles_factory', 'assets/maps/tiles_factory.png', {frameWidth: 32, frameHeight: 32});
-    this.load.spritesheet('player', 'assets/mage_placeholder.png', {frameWidth: 32, frameHeight: 32});
-  }
+  // preload () {
+  //   this.load.scenePlugin('Slopes', 'js/phaser-slopes.min.js');
+  //
+  //   //this.load.image('player', 'assets/mage_placeholder.png');
+  //   //this.load.image('platformTile', 'assets/platform_placeholder.png');
+  //   this.load.image('projectile', 'assets/projectile_placeholder.png');
+  //   this.load.image('projectile_large', 'assets/projectile_large_placeholder.png');
+  //   this.load.image('bubble', 'assets/bubble_placeholder.png');
+  //   this.load.image('door', 'assets/door_placeholder.png');
+  //
+  //   this.load.image('bg_outside', 'assets/bg_1.png');
+  //   this.load.image('bg_inside', 'assets/bg_2.png');
+  //
+  //   // map made with Tiled in JSON format
+  //   this.load.tilemapTiledJSON('map1', 'assets/maps/demo_level_1.json');
+  //   this.load.tilemapTiledJSON('map2', 'assets/maps/demo_level_2.json');
+  //   this.load.tilemapTiledJSON('map3', 'assets/maps/demo_level_3.json');
+  //   this.load.tilemapTiledJSON('map4', 'assets/maps/demo_level_4.json');
+  //   this.load.tilemapTiledJSON('map5', 'assets/maps/demo_level_5.json');
+  //
+  //   this.load.tilemapTiledJSON('map6', 'assets/maps/demo_level_end.json');
+  //
+  //   // tiles in spritesheet
+  //   this.load.spritesheet('tiles', 'assets/maps/tiles_placeholder.png', {frameWidth: 32, frameHeight: 32});
+  //   this.load.spritesheet('tiles_out', 'assets/maps/tiles_outdoors.png', {frameWidth: 32, frameHeight: 32});
+  //   this.load.spritesheet('tiles_factory', 'assets/maps/tiles_factory.png', {frameWidth: 32, frameHeight: 32});
+  //   this.load.spritesheet('player', 'assets/mage_placeholder.png', {frameWidth: 32, frameHeight: 32});
+  //
+  //   this.load.audio('step1', 'assets/sound/stepLeft3.mp3')
+  //   this.load.audio('step2', 'assets/sound/stepRight3.mp3')
+  //   this.load.audio('land', 'assets/sound/landing.mp3')
+  //   this.load.audio('bounce', 'assets/sound/landing2.mp3')
+  //
+  //   this.load.audio('pop', 'assets/sound/pop.mp3')
+  //   this.load.audio('charge', 'assets/sound/charging.mp3')
+  //   this.load.audio('fire', 'assets/sound/whoosh.mp3')
+  //   this.load.audio('tap', 'assets/sound/tap.mp3')
+  //
+  //   this.load.audio('outdoorMusic', 'assets/sound/Almost New.mp3')
+  //   this.load.audio('indoorMusic', 'assets/sound/Intended Force.mp3')
+  // }
 
   create () {
     //collisions
@@ -79,6 +89,7 @@ class Scene_game extends Phaser.Scene {
         map = this.make.tilemap({key: 'map1'});
         tileSheet = "tiles_out"
         bg = this.add.image(480, 360, 'bg_outside');
+        this.sound.play('outdoorMusic', {loop: true})
         break;
       case "2":
         map = this.make.tilemap({key: 'map2'});
@@ -89,6 +100,8 @@ class Scene_game extends Phaser.Scene {
         map = this.make.tilemap({key: 'map3'});
         tileSheet = "tiles_factory"
         bg = this.add.image(480, 360, 'bg_inside');
+        this.sound.stopAll()
+        this.sound.play('indoorMusic', {loop: true})
         break;
       case "4":
         map = this.make.tilemap({key: 'map4'});
@@ -315,6 +328,7 @@ class Scene_game extends Phaser.Scene {
     }
     var pointer = game.input.activePointer
     if (pointer.justUp) {
+      this.sound.play('fire')
       //remove ghost particles
       // for (var i = playerProjectiles.length-1; i >= 0; i--) {
       //   playerProjectiles[i].update();
@@ -451,6 +465,7 @@ class Scene_game extends Phaser.Scene {
       if (player.isTouching.ground) {
         player.setVelocityY(-8);
       } else if (player.state.mana >= 80) {
+        this.sound.play('fire')
         player.setVelocityY(-10);
         player.state.spendMana(80);
         player.jumpParticles(this);

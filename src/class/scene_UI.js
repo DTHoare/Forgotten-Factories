@@ -14,8 +14,8 @@ class Scene_UI extends Phaser.Scene {
     }
 
     preload () {
-      this.load.bitmapFont('editundo', 'assets/font/editundo_0.png', 'assets/font/editundo.fnt');
-      this.load.image('ui', 'assets/UI_placeholder.png');
+      // this.load.bitmapFont('editundo', 'assets/font/editundo_0.png', 'assets/font/editundo.fnt');
+      // this.load.image('ui', 'assets/UI_placeholder.png');
     }
 
     create () {

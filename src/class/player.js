@@ -31,7 +31,7 @@ class Player extends Phaser.Physics.Matter.Sprite{
         anims.create({
           key: "player-run",
           frames: anims.generateFrameNumbers(texture, { start: 0, end: 3 }),
-          frameRate: 12,
+          frameRate: 8,
           repeat: -1
         });
         anims.create({
@@ -46,6 +46,13 @@ class Player extends Phaser.Physics.Matter.Sprite{
           frameRate: 12,
           repeat: -1
         });
+
+        this.step1 = this.scene.sound.add('step1', {loop:false})
+        this.step2 = this.scene.sound.add('step2', {loop:false})
+        this.bounce = this.scene.sound.add('bounce', {loop:false})
+        this.chargingSound = this.scene.sound.add('charge', {loop:true})
+        this.chargingSound.play()
+        this.chargingSound.pause()
 
         this.state = new PlayerState();
         this.resetPosition = {x:x, y:y}
@@ -134,9 +141,23 @@ class Player extends Phaser.Physics.Matter.Sprite{
             if(gameObjectB.isLethal  && this.scene.focus === this) {
               this.death(this.x, this.y);
             }
+            if(this.body.speed > 6.) {
+              this.bounce.play()
+            }
+
 
           },
           context: this
+        });
+
+        this.on('animationupdate', function () {
+          if(this.anims.currentAnim.key === 'player-run') {
+            if (this.anims.currentFrame.index === 2) {
+              this.step1.play();
+            } else if (this.anims.currentFrame.index === 4) {
+              this.step2.play();
+            }
+          }
         });
 
         this.scene.events.on("postupdate", this.update, this)
@@ -225,6 +246,9 @@ class Player extends Phaser.Physics.Matter.Sprite{
         if (pair.separation > 0.5) this.x -= (pair.separation - 0.5);
       } else if (bodyA === this.sensors.bottom) {
         this.isTouching.ground = true;
+        if(this.state.charging === false) {
+          this.state.mana = 100
+        }
       }
     }
 
@@ -376,13 +400,15 @@ function PlayerState(){
   this.startCharge = function(){
     this.charging = true;
     this.manaRegen = false;
+    player.chargingSound.resume()
   }
 
   this.endCharge = function(){
     this.charging = false;
     this.manaRegen = true;
     this.charge = 0;
-    this.mana = 100;
+    //this.mana = 100;
+    player.chargingSound.pause()
   }
 
   this.updateMana = function() {

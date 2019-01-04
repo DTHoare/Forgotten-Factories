@@ -248,6 +248,55 @@ class Goal extends Interactive{
   }
 }
 
+class Scene_menu extends Phaser.Scene {
+
+  constructor ()
+  {
+    super('MainMenu');
+  }
+
+  create() {
+    this.addButton(600, 300, "start", "start")
+    this.addButton(600, 400, "credits", "credits")
+
+    this.input.on('gameobjectover', function (pointer, button)
+    {
+        button.setFrame(1);
+    }, this);
+    this.input.on('gameobjectout', function (pointer, button)
+    {
+        button.setFrame(0);
+    }, this);
+
+    this.input.on('gameobjectup', function (pointer, button)
+    {
+      if(button.getData('index') === 'start') {
+        game.scene.add('GameScene', new Scene_game(), true)
+        game.scene.add('UIScene', new Scene_UI(), true)
+        this.scene.remove('MainMenu')
+      } else if (button.getData('index') === 'credits') {
+        game.scene.add('Credits', new Scene_credits(), true)
+        this.scene.stop('MainMenu')
+      }
+
+
+    }, this);
+  }
+
+  update () {
+    // game.scene.add('GameScene', new Scene_game(), true)
+    // game.scene.add('UIScene', new Scene_UI(), true)
+  }
+
+  addButton(x, y, text, scene) {
+    var button = this.add.sprite(x, y, 'button', 0).setInteractive()
+    button.setData('index', scene)
+    var startText = this.add.bitmapText(x, y, 'editundo', text)
+    startText.setOrigin(0.5,0.5)
+  }
+
+}
+
 
 /**
  * The player is the playable character, contains state information and interaction
@@ -281,7 +330,7 @@ class Player extends Phaser.Physics.Matter.Sprite{
         anims.create({
           key: "player-run",
           frames: anims.generateFrameNumbers(texture, { start: 0, end: 3 }),
-          frameRate: 12,
+          frameRate: 8,
           repeat: -1
         });
         anims.create({
@@ -296,6 +345,13 @@ class Player extends Phaser.Physics.Matter.Sprite{
           frameRate: 12,
           repeat: -1
         });
+
+        this.step1 = this.scene.sound.add('step1', {loop:false})
+        this.step2 = this.scene.sound.add('step2', {loop:false})
+        this.bounce = this.scene.sound.add('bounce', {loop:false})
+        this.chargingSound = this.scene.sound.add('charge', {loop:true})
+        this.chargingSound.play()
+        this.chargingSound.pause()
 
         this.state = new PlayerState();
         this.resetPosition = {x:x, y:y}
@@ -384,9 +440,23 @@ class Player extends Phaser.Physics.Matter.Sprite{
             if(gameObjectB.isLethal  && this.scene.focus === this) {
               this.death(this.x, this.y);
             }
+            if(this.body.speed > 6.) {
+              this.bounce.play()
+            }
+
 
           },
           context: this
+        });
+
+        this.on('animationupdate', function () {
+          if(this.anims.currentAnim.key === 'player-run') {
+            if (this.anims.currentFrame.index === 2) {
+              this.step1.play();
+            } else if (this.anims.currentFrame.index === 4) {
+              this.step2.play();
+            }
+          }
         });
 
         this.scene.events.on("postupdate", this.update, this)
@@ -475,6 +545,9 @@ class Player extends Phaser.Physics.Matter.Sprite{
         if (pair.separation > 0.5) this.x -= (pair.separation - 0.5);
       } else if (bodyA === this.sensors.bottom) {
         this.isTouching.ground = true;
+        if(this.state.charging === false) {
+          this.state.mana = 100
+        }
       }
     }
 
@@ -626,13 +699,15 @@ function PlayerState(){
   this.startCharge = function(){
     this.charging = true;
     this.manaRegen = false;
+    player.chargingSound.resume()
   }
 
   this.endCharge = function(){
     this.charging = false;
     this.manaRegen = true;
     this.charge = 0;
-    this.mana = 100;
+    //this.mana = 100;
+    player.chargingSound.pause()
   }
 
   this.updateMana = function() {
@@ -780,6 +855,8 @@ class Projectile_Teleport extends Projectile{
 
   teleport() {
     if(!this.fail) {
+      this.scene.sound.play('pop', {volume:0.3})
+      this.scene.sound.play('bounce')
       player.setX(this.x);
       player.setY(this.y);
       player.setVelocityX(this.body.velocity.x);
@@ -871,6 +948,7 @@ class Particle_ghost extends Projectile{
      this.setCollisionCategory(collision_ghost);
      this.setCollidesWith([collision_block]);
      this.setMass(0.001);
+     this.sound = this.scene.sound.add('tap', {loop:false, volume:0.1})
 
      //this collision event uses the modified matter engine
      //this class updates in collisions without updating the object it collides with
@@ -880,8 +958,15 @@ class Particle_ghost extends Projectile{
          const { bodyB, gameObjectB, pair} = eventData;
          if (pair.gameObjectA === this) {
            pair.onlyA = true;
+           if(this.body.speed > 4.) {
+             this.sound.play()
+           }
+
          } else {
            pair.onlyB = true;
+           if(this.body.speed > 4.) {
+             this.sound.play()
+           }
          }
 
        },
@@ -893,6 +978,7 @@ class Particle_ghost extends Projectile{
      if(this.destroyed) {
        return;
      }
+     this.sound.destroy()
      this.destroyed = true
      this.scene.matterCollision.removeOnCollideStart({objectA: [this]})
      super.destroy()
@@ -1133,6 +1219,31 @@ class Scene_book extends Phaser.Scene {
     }
 }
 
+class Scene_credits extends Phaser.Scene {
+
+  constructor ()
+  {
+    super('Credits');
+  }
+
+  create () {
+    this.add.bitmapText(100, 200, 'editundo', "Created by Daniel Hoare")
+    this.add.bitmapText(50, 400, 'editundo', "'Almost New' & 'Intended Force' - Kevin MacLeod (incompetech.com)")
+    this.add.bitmapText(50, 450, 'editundo', "Licensed under Creative Commons: By Attribution 3.0")
+    this.add.bitmapText(100, 600, 'editundo', "Special thanks to Joellen <3")
+
+    var text = this.add.bitmapText(300, 50, 'editundo', "Click to return")
+    text.setTint(0xcf4ed8)
+
+    this.input.on("pointerup", function() {
+      this.scene.launch('MainMenu')
+      this.scene.remove("Credits")
+    }, this)
+
+  }
+
+}
+
 
 /**
  * Extension of phaser.scene for running the game itself
@@ -1144,9 +1255,6 @@ class Scene_game extends Phaser.Scene {
     super('GameScene');
     this.books = [];
     this.trail = [];
-    // if (!this.sys.settings.data.level) {
-    //   this.sys.settings.data.level = 1;
-    // }
   }
 
   focusPlayer() {
@@ -1167,34 +1275,47 @@ class Scene_game extends Phaser.Scene {
     }
   }
 
-  preload () {
-    this.load.scenePlugin('Slopes', 'js/phaser-slopes.min.js');
-
-    //this.load.image('player', 'assets/mage_placeholder.png');
-    //this.load.image('platformTile', 'assets/platform_placeholder.png');
-    this.load.image('projectile', 'assets/projectile_placeholder.png');
-    this.load.image('projectile_large', 'assets/projectile_large_placeholder.png');
-    this.load.image('bubble', 'assets/bubble_placeholder.png');
-    this.load.image('door', 'assets/door_placeholder.png');
-
-    this.load.image('bg_outside', 'assets/bg_1.png');
-    this.load.image('bg_inside', 'assets/bg_2.png');
-
-    // map made with Tiled in JSON format
-    this.load.tilemapTiledJSON('map1', 'assets/maps/demo_level_1.json');
-    this.load.tilemapTiledJSON('map2', 'assets/maps/demo_level_2.json');
-    this.load.tilemapTiledJSON('map3', 'assets/maps/demo_level_3.json');
-    this.load.tilemapTiledJSON('map4', 'assets/maps/demo_level_4.json');
-    this.load.tilemapTiledJSON('map5', 'assets/maps/demo_level_5.json');
-
-    this.load.tilemapTiledJSON('map6', 'assets/maps/demo_level_end.json');
-
-    // tiles in spritesheet
-    this.load.spritesheet('tiles', 'assets/maps/tiles_placeholder.png', {frameWidth: 32, frameHeight: 32});
-    this.load.spritesheet('tiles_out', 'assets/maps/tiles_outdoors.png', {frameWidth: 32, frameHeight: 32});
-    this.load.spritesheet('tiles_factory', 'assets/maps/tiles_factory.png', {frameWidth: 32, frameHeight: 32});
-    this.load.spritesheet('player', 'assets/mage_placeholder.png', {frameWidth: 32, frameHeight: 32});
-  }
+  // preload () {
+  //   this.load.scenePlugin('Slopes', 'js/phaser-slopes.min.js');
+  //
+  //   //this.load.image('player', 'assets/mage_placeholder.png');
+  //   //this.load.image('platformTile', 'assets/platform_placeholder.png');
+  //   this.load.image('projectile', 'assets/projectile_placeholder.png');
+  //   this.load.image('projectile_large', 'assets/projectile_large_placeholder.png');
+  //   this.load.image('bubble', 'assets/bubble_placeholder.png');
+  //   this.load.image('door', 'assets/door_placeholder.png');
+  //
+  //   this.load.image('bg_outside', 'assets/bg_1.png');
+  //   this.load.image('bg_inside', 'assets/bg_2.png');
+  //
+  //   // map made with Tiled in JSON format
+  //   this.load.tilemapTiledJSON('map1', 'assets/maps/demo_level_1.json');
+  //   this.load.tilemapTiledJSON('map2', 'assets/maps/demo_level_2.json');
+  //   this.load.tilemapTiledJSON('map3', 'assets/maps/demo_level_3.json');
+  //   this.load.tilemapTiledJSON('map4', 'assets/maps/demo_level_4.json');
+  //   this.load.tilemapTiledJSON('map5', 'assets/maps/demo_level_5.json');
+  //
+  //   this.load.tilemapTiledJSON('map6', 'assets/maps/demo_level_end.json');
+  //
+  //   // tiles in spritesheet
+  //   this.load.spritesheet('tiles', 'assets/maps/tiles_placeholder.png', {frameWidth: 32, frameHeight: 32});
+  //   this.load.spritesheet('tiles_out', 'assets/maps/tiles_outdoors.png', {frameWidth: 32, frameHeight: 32});
+  //   this.load.spritesheet('tiles_factory', 'assets/maps/tiles_factory.png', {frameWidth: 32, frameHeight: 32});
+  //   this.load.spritesheet('player', 'assets/mage_placeholder.png', {frameWidth: 32, frameHeight: 32});
+  //
+  //   this.load.audio('step1', 'assets/sound/stepLeft3.mp3')
+  //   this.load.audio('step2', 'assets/sound/stepRight3.mp3')
+  //   this.load.audio('land', 'assets/sound/landing.mp3')
+  //   this.load.audio('bounce', 'assets/sound/landing2.mp3')
+  //
+  //   this.load.audio('pop', 'assets/sound/pop.mp3')
+  //   this.load.audio('charge', 'assets/sound/charging.mp3')
+  //   this.load.audio('fire', 'assets/sound/whoosh.mp3')
+  //   this.load.audio('tap', 'assets/sound/tap.mp3')
+  //
+  //   this.load.audio('outdoorMusic', 'assets/sound/Almost New.mp3')
+  //   this.load.audio('indoorMusic', 'assets/sound/Intended Force.mp3')
+  // }
 
   create () {
     //collisions
@@ -1214,6 +1335,7 @@ class Scene_game extends Phaser.Scene {
         map = this.make.tilemap({key: 'map1'});
         tileSheet = "tiles_out"
         bg = this.add.image(480, 360, 'bg_outside');
+        this.sound.play('outdoorMusic', {loop: true})
         break;
       case "2":
         map = this.make.tilemap({key: 'map2'});
@@ -1224,6 +1346,8 @@ class Scene_game extends Phaser.Scene {
         map = this.make.tilemap({key: 'map3'});
         tileSheet = "tiles_factory"
         bg = this.add.image(480, 360, 'bg_inside');
+        this.sound.stopAll()
+        this.sound.play('indoorMusic', {loop: true})
         break;
       case "4":
         map = this.make.tilemap({key: 'map4'});
@@ -1450,6 +1574,7 @@ class Scene_game extends Phaser.Scene {
     }
     var pointer = game.input.activePointer
     if (pointer.justUp) {
+      this.sound.play('fire')
       //remove ghost particles
       // for (var i = playerProjectiles.length-1; i >= 0; i--) {
       //   playerProjectiles[i].update();
@@ -1586,6 +1711,7 @@ class Scene_game extends Phaser.Scene {
       if (player.isTouching.ground) {
         player.setVelocityY(-8);
       } else if (player.state.mana >= 80) {
+        this.sound.play('fire')
         player.setVelocityY(-10);
         player.state.spendMana(80);
         player.jumpParticles(this);
@@ -1655,6 +1781,68 @@ class Scene_levelEnd extends Phaser.Scene {
     }
 }
 
+class Scene_loading extends Phaser.Scene {
+
+  constructor ()
+  {
+    super('Loading');
+  }
+
+  preload () {
+    this.load.bitmapFont('editundo', 'assets/font/editundo_0.png', 'assets/font/editundo.fnt');
+    this.add.text(300,300, 'Loading...');
+    this.load.scenePlugin('Slopes', 'js/phaser-slopes.min.js');
+
+    //this.load.image('player', 'assets/mage_placeholder.png');
+    //this.load.image('platformTile', 'assets/platform_placeholder.png');
+    this.load.image('projectile', 'assets/projectile_placeholder.png');
+    this.load.image('projectile_large', 'assets/projectile_large_placeholder.png');
+    this.load.image('bubble', 'assets/bubble_placeholder.png');
+    this.load.image('door', 'assets/door_placeholder.png');
+
+    this.load.image('bg_outside', 'assets/bg_1.png');
+    this.load.image('bg_inside', 'assets/bg_2.png');
+
+    // map made with Tiled in JSON format
+    this.load.tilemapTiledJSON('map1', 'assets/maps/demo_level_1.json');
+    this.load.tilemapTiledJSON('map2', 'assets/maps/demo_level_2.json');
+    this.load.tilemapTiledJSON('map3', 'assets/maps/demo_level_3.json');
+    this.load.tilemapTiledJSON('map4', 'assets/maps/demo_level_4.json');
+    this.load.tilemapTiledJSON('map5', 'assets/maps/demo_level_5.json');
+
+    this.load.tilemapTiledJSON('map6', 'assets/maps/demo_level_end.json');
+
+    // tiles in spritesheet
+    this.load.spritesheet('tiles', 'assets/maps/tiles_placeholder.png', {frameWidth: 32, frameHeight: 32});
+    this.load.spritesheet('tiles_out', 'assets/maps/tiles_outdoors.png', {frameWidth: 32, frameHeight: 32});
+    this.load.spritesheet('tiles_factory', 'assets/maps/tiles_factory.png', {frameWidth: 32, frameHeight: 32});
+    this.load.spritesheet('player', 'assets/mage_placeholder.png', {frameWidth: 32, frameHeight: 32});
+    this.load.spritesheet('button', 'assets/button.png', {frameWidth: 128, frameHeight: 48});
+
+    this.load.audio('step1', 'assets/sound/stepLeft3.mp3')
+    this.load.audio('step2', 'assets/sound/stepRight3.mp3')
+    this.load.audio('land', 'assets/sound/landing.mp3')
+    this.load.audio('bounce', 'assets/sound/landing2.mp3')
+
+    this.load.audio('pop', 'assets/sound/pop.mp3')
+    this.load.audio('charge', 'assets/sound/charging.mp3')
+    this.load.audio('fire', 'assets/sound/whoosh.mp3')
+    this.load.audio('tap', 'assets/sound/tap.mp3')
+
+    this.load.audio('outdoorMusic', 'assets/sound/Almost New.mp3')
+    this.load.audio('indoorMusic', 'assets/sound/Intended Force.mp3')
+
+
+    this.load.image('ui', 'assets/UI_placeholder.png');
+  }
+
+  create () {
+    game.scene.add('MainMenu', new Scene_menu(), true)
+    this.scene.remove('Loading')
+  }
+
+}
+
 
 /**
  * The HUD/UI for the game. Has spell, mana and tooltip information
@@ -1671,8 +1859,8 @@ class Scene_UI extends Phaser.Scene {
     }
 
     preload () {
-      this.load.bitmapFont('editundo', 'assets/font/editundo_0.png', 'assets/font/editundo.fnt');
-      this.load.image('ui', 'assets/UI_placeholder.png');
+      // this.load.bitmapFont('editundo', 'assets/font/editundo_0.png', 'assets/font/editundo.fnt');
+      // this.load.image('ui', 'assets/UI_placeholder.png');
     }
 
     create () {
@@ -2068,7 +2256,7 @@ var config = {
           mapping: "matterCollision" // Where to store in the Scene, e.g. scene.matterCollision
         }]
     },
-   scene: [ Scene_game, Scene_UI],
+   scene: []//[ Scene_game, Scene_UI],
 
    // callbacks: {
    //    postBoot() {
@@ -2080,7 +2268,8 @@ var config = {
 };
 
 var game = new Phaser.Game(config);
-//game.scene.add('levelEndScene', Scene_levelEnd, false)
+game.scene.add('Loading', new Scene_loading(), true)
+
 
 var player;
 var playerProjectiles = [];

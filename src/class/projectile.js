@@ -125,6 +125,8 @@ class Projectile_Teleport extends Projectile{
 
   teleport() {
     if(!this.fail) {
+      this.scene.sound.play('pop', {volume:0.3})
+      this.scene.sound.play('bounce')
       player.setX(this.x);
       player.setY(this.y);
       player.setVelocityX(this.body.velocity.x);
@@ -216,6 +218,7 @@ class Particle_ghost extends Projectile{
      this.setCollisionCategory(collision_ghost);
      this.setCollidesWith([collision_block]);
      this.setMass(0.001);
+     this.sound = this.scene.sound.add('tap', {loop:false, volume:0.1})
 
      //this collision event uses the modified matter engine
      //this class updates in collisions without updating the object it collides with
@@ -225,8 +228,15 @@ class Particle_ghost extends Projectile{
          const { bodyB, gameObjectB, pair} = eventData;
          if (pair.gameObjectA === this) {
            pair.onlyA = true;
+           if(this.body.speed > 4.) {
+             this.sound.play()
+           }
+
          } else {
            pair.onlyB = true;
+           if(this.body.speed > 4.) {
+             this.sound.play()
+           }
          }
 
        },
@@ -238,6 +248,7 @@ class Particle_ghost extends Projectile{
      if(this.destroyed) {
        return;
      }
+     this.sound.destroy()
      this.destroyed = true
      this.scene.matterCollision.removeOnCollideStart({objectA: [this]})
      super.destroy()
