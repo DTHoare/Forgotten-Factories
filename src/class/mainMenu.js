@@ -6,8 +6,9 @@ class Scene_menu extends Phaser.Scene {
   }
 
   create() {
-    this.addButton(600, 300, "start", "start")
-    this.addButton(600, 400, "credits", "credits")
+    this.add.image(480, 360, 'bg_menu');
+    this.addButton(550, 200, "start", "start")
+    this.addButton(550, 300, "credits", "credits")
 
     this.input.on('gameobjectover', function (pointer, button)
     {

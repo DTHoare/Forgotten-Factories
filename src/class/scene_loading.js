@@ -8,7 +8,7 @@ class Scene_loading extends Phaser.Scene {
   preload () {
     this.load.bitmapFont('editundo', 'assets/font/editundo_0.png', 'assets/font/editundo.fnt');
     this.add.text(300,300, 'Loading...');
-    this.load.scenePlugin('Slopes', 'js/phaser-slopes.min.js');
+    //this.load.scenePlugin('Slopes', 'js/phaser-slopes.min.js');
 
     //this.load.image('player', 'assets/mage_placeholder.png');
     //this.load.image('platformTile', 'assets/platform_placeholder.png');
@@ -17,6 +17,7 @@ class Scene_loading extends Phaser.Scene {
     this.load.image('bubble', 'assets/bubble_placeholder.png');
     this.load.image('door', 'assets/door_placeholder.png');
 
+    this.load.image('bg_menu', 'assets/bg_menu.png');
     this.load.image('bg_outside', 'assets/bg_1.png');
     this.load.image('bg_inside', 'assets/bg_2.png');
 

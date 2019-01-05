@@ -17,14 +17,14 @@
 #### Spells
 
 * teleport self
-* bubble platform
+* bubble platform (not in use)
 * barrier spell
 * mid-air jump
 
 #### physics
 
 * matter.js modified to allow for one-sided collisions
-* low agility character - spells are more controllable and agile
+* mid air control
 * particles
 
 #### environment
@@ -38,10 +38,10 @@
 
 ## TODO:
 
-* destructable tiles
 * more Spells
+* more levels
 * duel wield spells/balance controls
 * narrative
-* menu system/UI upgrade
-* sound
-* art
+* UI upgrade
+* finalise sound
+* finalise art

@@ -23,13 +23,6 @@ var config = {
     },
    scene: []//[ Scene_game, Scene_UI],
 
-   // callbacks: {
-   //    postBoot() {
-   //      game.scene.add('UIScene', scenes.scene_levelEnd, false);
-   //
-   //      //game.scene.start('SceneA');
-   //    }
-   //  }
 };
 
 var game = new Phaser.Game(config);
