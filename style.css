@@ -1,0 +1,17 @@
+body {
+    background: #000;
+    margin: 0px auto;
+    font-size: 24px;
+}
+.gameScreen {
+  margin: auto;
+  width: 960px;
+}
+.instructions {
+  margin: auto;
+  color: white;
+  width: 960px;
+}
+iframe {
+  border: 0px;
+}

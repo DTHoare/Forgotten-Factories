@@ -1,8 +1,9 @@
 ﻿body {
     background: #333;
+    margin: 0px auto;
 }
 #game canvas {
     display: block;
-    margin: auto auto;
-    padding: auto auto;
+    margin: 0 0;
+    padding: 0 0;
 }
