@@ -9,7 +9,7 @@ module.exports = function (grunt) {
             server: {
                 options: {
                     port: 8080,
-                    base: './deploy'
+                    base: '.'
                 }
             }
         },
@@ -19,7 +19,7 @@ module.exports = function (grunt) {
                      ],
                 dest: 'deploy/js/phaser.js'
             },
-            phaser-slope: {
+            phaserSlope: {
               src: [  "src/lib/phaser-slopes.min.js"
                    ],
               dest: 'deploy/js/phaser-slopes.min.js'

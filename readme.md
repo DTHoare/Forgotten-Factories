@@ -8,28 +8,41 @@
 
 ## Known issues:
 
-* at high speeds can pass through single tiles
+* running in debug mode has issues with bitmap texts
+* collisions within bodies not always resolved correctly due to slopes
+* elevators are bumpy rides
+* move speed is not relative to the object being stood on
 
 ## Features:
 
 #### Spells
 
 * teleport self
-* bubble platform
+* bubble platform (not in use)
+* barrier spell
 * mid-air jump
 
 #### physics
 
 * matter.js modified to allow for one-sided collisions
-* low agility character - spells are more controllable and agile
+* mid air control
+* particles
+
+#### environment
+
+* multiple tile types
+* levers and doors
+* books to read
+* lifts and moving platforms
+* lethal projectiles
+* regular checkpoints
 
 ## TODO:
 
 * more Spells
-* complete demo level
-* multiple tile types
-* level interaction
+* more levels
+* duel wield spells/balance controls
 * narrative
-* menu system/UI upgrade
-* sound
-* art
+* UI upgrade
+* finalise sound
+* finalise art
