@@ -33,9 +33,9 @@ var player;
 var playerProjectiles = [];
 var particles = [];
 
-var collision_player;
-var collision_block;
-var collision_particle;
-var collision_ghost;
-var collision_blockPhysical;
-var collision_interactive;
+var collision_player = 2;
+var collision_block = 4;
+var collision_particle = 8;
+var collision_ghost = 16;
+var collision_blockPhysical = 32;
+var collision_interactive = 64;

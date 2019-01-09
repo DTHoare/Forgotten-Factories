@@ -405,4 +405,16 @@ class Projectile_emitted extends Projectile{
     }
     super.destroy()
   }
+
+  update() {
+    if (this.age > this.maxAge && !this.destroyed) {
+      this.destroy()
+    }
+    if (this.destroyed) {
+      return;
+    }
+    this.age ++;
+    this.setAlpha(1.4- (this.age/ (this.maxAge-1)) );
+    this.limitSpeed();
+  }
 }

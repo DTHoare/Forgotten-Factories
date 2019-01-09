@@ -1136,6 +1136,18 @@ class Projectile_emitted extends Projectile{
     }
     super.destroy()
   }
+
+  update() {
+    if (this.age > this.maxAge && !this.destroyed) {
+      this.destroy()
+    }
+    if (this.destroyed) {
+      return;
+    }
+    this.age ++;
+    this.setAlpha(1.4- (this.age/ (this.maxAge-1)) );
+    this.limitSpeed();
+  }
 }
 
 
@@ -1272,7 +1284,7 @@ class Scene_game extends Phaser.Scene {
     this.destroyed = false;
     this.level = data.level
     if (!data.level) {
-      this.level = "5"
+      this.level = "4"
     }
   }
 
@@ -1281,13 +1293,6 @@ class Scene_game extends Phaser.Scene {
   }
 
   create () {
-    //collisions
-    collision_player = this.matter.world.nextCategory();
-    collision_block = this.matter.world.nextCategory();
-    collision_particle = this.matter.world.nextCategory();
-    collision_ghost = this.matter.world.nextCategory();
-    collision_blockPhysical = this.matter.world.nextCategory();
-    collision_interactive = this.matter.world.nextCategory();
 
     var map;
     var tileSheet;
@@ -2232,9 +2237,9 @@ var player;
 var playerProjectiles = [];
 var particles = [];
 
-var collision_player;
-var collision_block;
-var collision_particle;
-var collision_ghost;
-var collision_blockPhysical;
-var collision_interactive;
+var collision_player = 2;
+var collision_block = 4;
+var collision_particle = 8;
+var collision_ghost = 16;
+var collision_blockPhysical = 32;
+var collision_interactive = 64;

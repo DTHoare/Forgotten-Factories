@@ -25,7 +25,7 @@ class Scene_game extends Phaser.Scene {
     this.destroyed = false;
     this.level = data.level
     if (!data.level) {
-      this.level = "5"
+      this.level = "4"
     }
   }
 
@@ -34,13 +34,6 @@ class Scene_game extends Phaser.Scene {
   }
 
   create () {
-    //collisions
-    collision_player = this.matter.world.nextCategory();
-    collision_block = this.matter.world.nextCategory();
-    collision_particle = this.matter.world.nextCategory();
-    collision_ghost = this.matter.world.nextCategory();
-    collision_blockPhysical = this.matter.world.nextCategory();
-    collision_interactive = this.matter.world.nextCategory();
 
     var map;
     var tileSheet;
