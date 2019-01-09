@@ -25,7 +25,7 @@ class Scene_game extends Phaser.Scene {
     this.destroyed = false;
     this.level = data.level
     if (!data.level) {
-      this.level = "4"
+      this.level = "1"
     }
   }
 
