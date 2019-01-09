@@ -1,8 +1,11 @@
 ﻿body {
     background: #333;
+    margin: 0;
+    padding: 0;
 }
 #game canvas {
     display: block;
-    margin: auto auto;
-    padding: auto auto;
+    margin: 0 auto;
+    height: 480px;
+    width: 640px;
 }

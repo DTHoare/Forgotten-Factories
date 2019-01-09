@@ -19,7 +19,7 @@ module.exports = function (grunt) {
                      ],
                 dest: 'deploy/js/phaser.js'
             },
-            phaserSlope: {
+            phaser-slope: {
               src: [  "src/lib/phaser-slopes.min.js"
                    ],
               dest: 'deploy/js/phaser-slopes.min.js'

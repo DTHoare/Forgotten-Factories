@@ -7,4 +7,3 @@ obj/*
 *.sln
 *.suo
 .idea/*
-*.xcf
