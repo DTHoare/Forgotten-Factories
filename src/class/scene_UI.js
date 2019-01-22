@@ -14,14 +14,12 @@ class Scene_UI extends Phaser.Scene {
     }
 
     preload () {
-      // this.load.bitmapFont('editundo', 'assets/font/editundo_0.png', 'assets/font/editundo.fnt');
-      // this.load.image('ui', 'assets/UI_placeholder.png');
     }
 
     create () {
       this.add.image(480, 30, 'ui');
-      var text = this.add.bitmapText(20,20, 'editundo', 'Mage Cage');
-      text.setTint(0xcf4ed8);
+      this.levelText = this.add.bitmapText(20,20, 'editundo', 'Level: 0');
+      this.levelText.setTint(0xcf4ed8);
 
       this.manaText = this.add.bitmapText(200,20, 'editundo', 'Mana: ');
       this.manaText.setTint(0xcf4ed8);
@@ -41,6 +39,11 @@ class Scene_UI extends Phaser.Scene {
 
       }, this);
 
+      this.gameScene.events.on('postInit', function () {
+
+          this.levelText.setText('Level: ' + this.gameScene.level);
+
+      }, this);
 
     }
 

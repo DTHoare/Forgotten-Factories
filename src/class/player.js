@@ -315,7 +315,7 @@ class Player extends Phaser.Physics.Matter.Sprite{
       //params.gid = -1 //for processing in Barrier
       params.properties = []
 
-      this.activeBarrier = this.scene.add.existing( new Barrier(this.scene, startX, startY, 'door', params) )
+      this.activeBarrier = this.scene.add.existing( new Barrier(this.scene, startX, startY, 'barrier', params) )
       return this.activeBarrier;
     }
 

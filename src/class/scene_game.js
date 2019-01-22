@@ -25,8 +25,9 @@ class Scene_game extends Phaser.Scene {
     this.destroyed = false;
     this.level = data.level
     if (!data.level) {
-      this.level = "1"
+      this.level = "0"
     }
+    this.events.emit("postInit");
   }
 
   preload () {
@@ -38,22 +39,32 @@ class Scene_game extends Phaser.Scene {
     var map;
     var tileSheet;
     var bg;
+    var doorGraphic;
     // load the map
     switch (this.level) {
+      case "0":
+        map = this.make.tilemap({key: 'map0'});
+        tileSheet = "tiles_out"
+        doorGraphic = "door_outdoors"
+        bg = this.add.image(480, 360, 'bg_outside');
+        this.sound.play('outdoorMusic', {loop: true})
+        break;
       case "1":
         map = this.make.tilemap({key: 'map1'});
         tileSheet = "tiles_out"
+        doorGraphic = "door_outdoors"
         bg = this.add.image(480, 360, 'bg_outside');
-        this.sound.play('outdoorMusic', {loop: true})
         break;
       case "2":
         map = this.make.tilemap({key: 'map2'});
         tileSheet = "tiles_out"
+        doorGraphic = "door_outdoors"
         bg = this.add.image(480, 360, 'bg_outside');
         break;
       case "3":
         map = this.make.tilemap({key: 'map3'});
         tileSheet = "tiles_factory"
+        doorGraphic = "door_factory"
         bg = this.add.image(480, 360, 'bg_inside');
         this.sound.stopAll()
         this.sound.play('indoorMusic', {loop: true})
@@ -61,27 +72,36 @@ class Scene_game extends Phaser.Scene {
       case "4":
         map = this.make.tilemap({key: 'map4'});
         tileSheet = "tiles_factory"
+        doorGraphic = "door_factory"
         bg = this.add.image(480, 360, 'bg_inside');
         break;
       case "5":
         map = this.make.tilemap({key: 'map5'});
         tileSheet = "tiles_factory"
+        doorGraphic = "door_factory"
         bg = this.add.image(480, 360, 'bg_inside');
         break;
       case "6":
         map = this.make.tilemap({key: 'map6'});
         tileSheet = "tiles_factory"
+        doorGraphic = "door_factory"
         bg = this.add.image(480, 360, 'bg_inside');
         break;
     }
     bg.setScrollFactor(0)
 
     var tiles = map.addTilesetImage('Tiles',tileSheet);
+    var tilesSign = map.addTilesetImage('TilesSign',"tiles_tutorial");
 
     var bgLayer = map.createDynamicLayer('bg', tiles, 0, 0);
     //groundLayer.setCollisionByProperty({ collides: true });
     if(bgLayer) {
       this.matter.world.convertTilemapLayer(bgLayer);
+    }
+
+    var signLayer = map.createDynamicLayer('tutorial', tilesSign, 0, 0);
+    if(signLayer) {
+      this.matter.world.convertTilemapLayer(signLayer);
     }
 
     var lethalLayer = map.createDynamicLayer('lethal', tiles, 0, 0);
@@ -163,7 +183,7 @@ class Scene_game extends Phaser.Scene {
       doorLayer.objects.forEach(door => {
         const { x, y, width, height } = door;
         var doorBody = this.add
-          .existing(new Door(this, x, y, "door", door));
+          .existing(new Door(this, x, y, doorGraphic, door));
       });
     }
 
@@ -172,7 +192,7 @@ class Scene_game extends Phaser.Scene {
       moverLayer.objects.forEach(mover => {
         const { x, y, width, height } = mover;
         var moverBody = this.add
-          .existing(new Mover(this, x, y, "door", mover));
+          .existing(new Mover(this, x, y, doorGraphic, mover));
       });
     }
 
