@@ -615,7 +615,7 @@ class Player extends Phaser.Physics.Matter.Sprite{
       //params.gid = -1 //for processing in Barrier
       params.properties = []
 
-      this.activeBarrier = this.scene.add.existing( new Barrier(this.scene, startX, startY, 'door', params) )
+      this.activeBarrier = this.scene.add.existing( new Barrier(this.scene, startX, startY, 'barrier', params) )
       return this.activeBarrier;
     }
 
@@ -1284,8 +1284,9 @@ class Scene_game extends Phaser.Scene {
     this.destroyed = false;
     this.level = data.level
     if (!data.level) {
-      this.level = "1"
+      this.level = "0"
     }
+    this.events.emit("postInit");
   }
 
   preload () {
@@ -1297,22 +1298,32 @@ class Scene_game extends Phaser.Scene {
     var map;
     var tileSheet;
     var bg;
+    var doorGraphic;
     // load the map
     switch (this.level) {
+      case "0":
+        map = this.make.tilemap({key: 'map0'});
+        tileSheet = "tiles_out"
+        doorGraphic = "door_outdoors"
+        bg = this.add.image(480, 360, 'bg_outside');
+        this.sound.play('outdoorMusic', {loop: true})
+        break;
       case "1":
         map = this.make.tilemap({key: 'map1'});
         tileSheet = "tiles_out"
+        doorGraphic = "door_outdoors"
         bg = this.add.image(480, 360, 'bg_outside');
-        this.sound.play('outdoorMusic', {loop: true})
         break;
       case "2":
         map = this.make.tilemap({key: 'map2'});
         tileSheet = "tiles_out"
+        doorGraphic = "door_outdoors"
         bg = this.add.image(480, 360, 'bg_outside');
         break;
       case "3":
         map = this.make.tilemap({key: 'map3'});
         tileSheet = "tiles_factory"
+        doorGraphic = "door_factory"
         bg = this.add.image(480, 360, 'bg_inside');
         this.sound.stopAll()
         this.sound.play('indoorMusic', {loop: true})
@@ -1320,27 +1331,36 @@ class Scene_game extends Phaser.Scene {
       case "4":
         map = this.make.tilemap({key: 'map4'});
         tileSheet = "tiles_factory"
+        doorGraphic = "door_factory"
         bg = this.add.image(480, 360, 'bg_inside');
         break;
       case "5":
         map = this.make.tilemap({key: 'map5'});
         tileSheet = "tiles_factory"
+        doorGraphic = "door_factory"
         bg = this.add.image(480, 360, 'bg_inside');
         break;
       case "6":
         map = this.make.tilemap({key: 'map6'});
         tileSheet = "tiles_factory"
+        doorGraphic = "door_factory"
         bg = this.add.image(480, 360, 'bg_inside');
         break;
     }
     bg.setScrollFactor(0)
 
     var tiles = map.addTilesetImage('Tiles',tileSheet);
+    var tilesSign = map.addTilesetImage('TilesSign',"tiles_tutorial");
 
     var bgLayer = map.createDynamicLayer('bg', tiles, 0, 0);
     //groundLayer.setCollisionByProperty({ collides: true });
     if(bgLayer) {
       this.matter.world.convertTilemapLayer(bgLayer);
+    }
+
+    var signLayer = map.createDynamicLayer('tutorial', tilesSign, 0, 0);
+    if(signLayer) {
+      this.matter.world.convertTilemapLayer(signLayer);
     }
 
     var lethalLayer = map.createDynamicLayer('lethal', tiles, 0, 0);
@@ -1422,7 +1442,7 @@ class Scene_game extends Phaser.Scene {
       doorLayer.objects.forEach(door => {
         const { x, y, width, height } = door;
         var doorBody = this.add
-          .existing(new Door(this, x, y, "door", door));
+          .existing(new Door(this, x, y, doorGraphic, door));
       });
     }
 
@@ -1431,7 +1451,7 @@ class Scene_game extends Phaser.Scene {
       moverLayer.objects.forEach(mover => {
         const { x, y, width, height } = mover;
         var moverBody = this.add
-          .existing(new Mover(this, x, y, "door", mover));
+          .existing(new Mover(this, x, y, doorGraphic, mover));
       });
     }
 
@@ -1766,13 +1786,17 @@ class Scene_loading extends Phaser.Scene {
     this.load.image('projectile', 'assets/projectile_placeholder.png');
     this.load.image('projectile_large', 'assets/projectile_large_placeholder.png');
     this.load.image('bubble', 'assets/bubble_placeholder.png');
-    this.load.image('door', 'assets/door_placeholder.png');
+    this.load.image('door_outdoors', 'assets/door_outdoors.png');
+    this.load.image('door_factory', 'assets/door_factory.png');
+    this.load.image('barrier', 'assets/barrier.png');
 
     this.load.image('bg_menu', 'assets/bg_menu.png');
     this.load.image('bg_outside', 'assets/bg_1.png');
     this.load.image('bg_inside', 'assets/bg_2.png');
 
     // map made with Tiled in JSON format
+    this.load.tilemapTiledJSON('map0', 'assets/maps/demo_level_0.json');
+
     this.load.tilemapTiledJSON('map1', 'assets/maps/demo_level_1.json');
     this.load.tilemapTiledJSON('map2', 'assets/maps/demo_level_2.json');
     this.load.tilemapTiledJSON('map3', 'assets/maps/demo_level_3.json');
@@ -1785,6 +1809,7 @@ class Scene_loading extends Phaser.Scene {
     this.load.spritesheet('tiles', 'assets/maps/tiles_placeholder.png', {frameWidth: 32, frameHeight: 32});
     this.load.spritesheet('tiles_out', 'assets/maps/tiles_outdoors.png', {frameWidth: 32, frameHeight: 32});
     this.load.spritesheet('tiles_factory', 'assets/maps/tiles_factory.png', {frameWidth: 32, frameHeight: 32});
+    this.load.spritesheet('tiles_tutorial', 'assets/maps/tiles_tutorial.png', {frameWidth: 32, frameHeight: 32});
     this.load.spritesheet('player', 'assets/mage_placeholder.png', {frameWidth: 32, frameHeight: 32});
     this.load.spritesheet('button', 'assets/button.png', {frameWidth: 128, frameHeight: 48});
 
@@ -1828,14 +1853,12 @@ class Scene_UI extends Phaser.Scene {
     }
 
     preload () {
-      // this.load.bitmapFont('editundo', 'assets/font/editundo_0.png', 'assets/font/editundo.fnt');
-      // this.load.image('ui', 'assets/UI_placeholder.png');
     }
 
     create () {
       this.add.image(480, 30, 'ui');
-      var text = this.add.bitmapText(20,20, 'editundo', 'Mage Cage');
-      text.setTint(0xcf4ed8);
+      this.levelText = this.add.bitmapText(20,20, 'editundo', 'Level: 0');
+      this.levelText.setTint(0xcf4ed8);
 
       this.manaText = this.add.bitmapText(200,20, 'editundo', 'Mana: ');
       this.manaText.setTint(0xcf4ed8);
@@ -1855,6 +1878,11 @@ class Scene_UI extends Phaser.Scene {
 
       }, this);
 
+      this.gameScene.events.on('postInit', function () {
+
+          this.levelText.setText('Level: ' + this.gameScene.level);
+
+      }, this);
 
     }
 
