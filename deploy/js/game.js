@@ -1317,6 +1317,8 @@ class Scene_game extends Phaser.Scene {
       frameRate: 12,
       repeat: -1
     });
+
+    this.bgMusic = null;
   }
 
   create () {
@@ -1332,19 +1334,30 @@ class Scene_game extends Phaser.Scene {
         tileSheet = "tiles_out"
         doorGraphic = "door_outdoors"
         bg = this.add.image(480, 360, 'bg_outside');
-        this.sound.play('outdoorMusic', {loop: true})
+        if(!this.bgMusic) {
+          this.bgMusic = this.sound.add('outdoorMusic', {loop: true})
+          this.bgMusic.play();
+        }
         break;
       case "1":
         map = this.make.tilemap({key: 'map1'});
         tileSheet = "tiles_out"
         doorGraphic = "door_outdoors"
         bg = this.add.image(480, 360, 'bg_outside');
+        if(!this.bgMusic) {
+          this.bgMusic = this.sound.add('outdoorMusic', {loop: true})
+          this.bgMusic.play();
+        }
         break;
       case "2":
         map = this.make.tilemap({key: 'map2'});
         tileSheet = "tiles_out"
         doorGraphic = "door_outdoors"
         bg = this.add.image(480, 360, 'bg_outside');
+        if(!this.bgMusic) {
+          this.bgMusic = this.sound.add('outdoorMusic', {loop: true})
+          this.bgMusic.play();
+        }
         break;
       case "3":
         map = this.make.tilemap({key: 'map3'});
@@ -1352,19 +1365,31 @@ class Scene_game extends Phaser.Scene {
         doorGraphic = "door_factory"
         bg = this.add.image(480, 360, 'bg_inside');
         this.sound.stopAll()
-        this.sound.play('indoorMusic', {loop: true})
+        this.bgMusic = null;
+        if(!this.bgMusic) {
+          this.bgMusic = this.sound.add('indoorMusic', {loop: true})
+          this.bgMusic.play();
+        }
         break;
       case "4":
         map = this.make.tilemap({key: 'map4'});
         tileSheet = "tiles_factory"
         doorGraphic = "door_factory"
         bg = this.add.image(480, 360, 'bg_inside');
+        if(!this.bgMusic) {
+          this.bgMusic = this.sound.add('indoorMusic', {loop: true})
+          this.bgMusic.play();
+        }
         break;
       case "5":
         map = this.make.tilemap({key: 'map5'});
         tileSheet = "tiles_factory"
         doorGraphic = "door_factory"
         bg = this.add.image(480, 360, 'bg_inside');
+        if(!this.bgMusic) {
+          this.bgMusic = this.sound.add('indoorMusic', {loop: true})
+          this.bgMusic.play();
+        }
         break;
       case "6":
         map = this.make.tilemap({key: 'map6'});
