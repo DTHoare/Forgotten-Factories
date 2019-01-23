@@ -32,6 +32,32 @@ class Scene_game extends Phaser.Scene {
 
   preload () {
     this.load.scenePlugin('Slopes', 'js/phaser-slopes.min.js');
+
+    const anims = this.anims;
+    anims.create({
+      key: "teleport-idle",
+      frames: anims.generateFrameNumbers("teleport", { start: 0, end: 0 }),
+      frameRate: 3,
+      repeat: -1
+    });
+    anims.create({
+      key: "teleport-run",
+      frames: anims.generateFrameNumbers("teleport", { start: 0, end: 3 }),
+      frameRate: 8,
+      repeat: -1
+    });
+    anims.create({
+      key: "teleport-fall",
+      frames: anims.generateFrameNumbers("teleport", { start: 4, end: 7 }),
+      frameRate: 12,
+      repeat: -1
+    });
+    anims.create({
+      key: "teleport-jump",
+      frames: anims.generateFrameNumbers("teleport", { start: 8, end: 11 }),
+      frameRate: 12,
+      repeat: -1
+    });
   }
 
   create () {
@@ -316,7 +342,7 @@ class Scene_game extends Phaser.Scene {
       //cast the current spell
       var angle = Phaser.Math.Angle.Between(player.x, player.y, pointer.x + this.cameras.main.scrollX, pointer.y + this.cameras.main.scrollY);
       if (player.state.spell === "teleport") {
-        var projectile = this.add.existing( new Projectile_Teleport(this, player.x+player.state.particleSourceX, player.y+player.state.particleSourceY, 'player') );
+        var projectile = this.add.existing( new Projectile_Teleport(this, player.x+player.state.particleSourceX, player.y+player.state.particleSourceY, 'teleport') );
         projectile.init(player.state.charge, angle);
         this.focusObject(projectile);
       } else if (player.state.spell === "bubble" && !this.trail[0].touching){

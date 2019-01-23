@@ -40,6 +40,7 @@ class Scene_loading extends Phaser.Scene {
     this.load.spritesheet('tiles_factory', 'assets/maps/tiles_factory.png', {frameWidth: 32, frameHeight: 32});
     this.load.spritesheet('tiles_tutorial', 'assets/maps/tiles_tutorial.png', {frameWidth: 32, frameHeight: 32});
     this.load.spritesheet('player', 'assets/mage_placeholder.png', {frameWidth: 32, frameHeight: 32});
+    this.load.spritesheet('teleport', 'assets/teleport_placeholder.png', {frameWidth: 32, frameHeight: 32});
     this.load.spritesheet('button', 'assets/button.png', {frameWidth: 128, frameHeight: 48});
 
     this.load.audio('step1', 'assets/sound/stepLeft3.mp3')
@@ -60,6 +61,7 @@ class Scene_loading extends Phaser.Scene {
   }
 
   create () {
+    //make animations
     game.scene.add('MainMenu', new Scene_menu(), true)
     this.scene.remove('Loading')
   }

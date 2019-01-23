@@ -113,11 +113,11 @@ class Projectile_Teleport extends Projectile{
       this.teleport()
     }
     if (this.body.velocity.y > 0) {
-      this.anims.play("player-fall", true);
+      this.anims.play("teleport-fall", true);
     } else if (this.body.velocity.y < 0) {
-      this.anims.play("player-jump", true);
+      this.anims.play("teleport-jump", true);
     } else {
-      this.anims.play("player-idle", true);
+      this.anims.play("teleport-idle", true);
     }
 
     super.update()

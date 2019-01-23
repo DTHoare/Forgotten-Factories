@@ -258,6 +258,7 @@ class Scene_menu extends Phaser.Scene {
   create() {
     this.add.image(480, 360, 'bg_menu');
     this.addButton(550, 200, "start", "start")
+    this.addButton(550, 250, "level select", "level select")
     this.addButton(550, 300, "credits", "credits")
 
     this.input.on('gameobjectover', function (pointer, button)
@@ -275,6 +276,9 @@ class Scene_menu extends Phaser.Scene {
         game.scene.add('GameScene', new Scene_game(), true)
         game.scene.add('UIScene', new Scene_UI(), true)
         this.scene.remove('MainMenu')
+      } else if (button.getData('index') === 'level select') {
+        game.scene.add('LevelSelect', new Scene_levelSelect(), true)
+        this.scene.stop('MainMenu')
       } else if (button.getData('index') === 'credits') {
         game.scene.add('Credits', new Scene_credits(), true)
         this.scene.stop('MainMenu')
@@ -284,15 +288,11 @@ class Scene_menu extends Phaser.Scene {
     }, this);
   }
 
-  update () {
-    // game.scene.add('GameScene', new Scene_game(), true)
-    // game.scene.add('UIScene', new Scene_UI(), true)
-  }
-
   addButton(x, y, text, scene) {
     var button = this.add.sprite(x, y, 'button', 0).setInteractive()
     button.setData('index', scene)
     var startText = this.add.bitmapText(x, y, 'editundo', text)
+    button.displayWidth = startText.width*1.3
     startText.setOrigin(0.5,0.5)
   }
 
@@ -844,11 +844,11 @@ class Projectile_Teleport extends Projectile{
       this.teleport()
     }
     if (this.body.velocity.y > 0) {
-      this.anims.play("player-fall", true);
+      this.anims.play("teleport-fall", true);
     } else if (this.body.velocity.y < 0) {
-      this.anims.play("player-jump", true);
+      this.anims.play("teleport-jump", true);
     } else {
-      this.anims.play("player-idle", true);
+      this.anims.play("teleport-idle", true);
     }
 
     super.update()
@@ -1291,6 +1291,32 @@ class Scene_game extends Phaser.Scene {
 
   preload () {
     this.load.scenePlugin('Slopes', 'js/phaser-slopes.min.js');
+
+    const anims = this.anims;
+    anims.create({
+      key: "teleport-idle",
+      frames: anims.generateFrameNumbers("teleport", { start: 0, end: 0 }),
+      frameRate: 3,
+      repeat: -1
+    });
+    anims.create({
+      key: "teleport-run",
+      frames: anims.generateFrameNumbers("teleport", { start: 0, end: 3 }),
+      frameRate: 8,
+      repeat: -1
+    });
+    anims.create({
+      key: "teleport-fall",
+      frames: anims.generateFrameNumbers("teleport", { start: 4, end: 7 }),
+      frameRate: 12,
+      repeat: -1
+    });
+    anims.create({
+      key: "teleport-jump",
+      frames: anims.generateFrameNumbers("teleport", { start: 8, end: 11 }),
+      frameRate: 12,
+      repeat: -1
+    });
   }
 
   create () {
@@ -1575,7 +1601,7 @@ class Scene_game extends Phaser.Scene {
       //cast the current spell
       var angle = Phaser.Math.Angle.Between(player.x, player.y, pointer.x + this.cameras.main.scrollX, pointer.y + this.cameras.main.scrollY);
       if (player.state.spell === "teleport") {
-        var projectile = this.add.existing( new Projectile_Teleport(this, player.x+player.state.particleSourceX, player.y+player.state.particleSourceY, 'player') );
+        var projectile = this.add.existing( new Projectile_Teleport(this, player.x+player.state.particleSourceX, player.y+player.state.particleSourceY, 'teleport') );
         projectile.init(player.state.charge, angle);
         this.focusObject(projectile);
       } else if (player.state.spell === "bubble" && !this.trail[0].touching){
@@ -1769,6 +1795,68 @@ class Scene_levelEnd extends Phaser.Scene {
     }
 }
 
+class Scene_levelSelect extends Phaser.Scene {
+
+  constructor ()
+  {
+    super('LevelSelect');
+  }
+
+  create() {
+    this.add.image(480, 360, 'bg_menu');
+    this.addButton(250, 50, "return", "return")
+    for(var i = 0; i <= 5; i++) {
+      this.addButton(450, 150+30*i, "Level "+i, "level "+i)
+    }
+
+
+    this.input.on('gameobjectover', function (pointer, button)
+    {
+        button.setFrame(1);
+    }, this);
+    this.input.on('gameobjectout', function (pointer, button)
+    {
+        button.setFrame(0);
+    }, this);
+
+    this.input.on('gameobjectup', function (pointer, button)
+    {
+      if(button.getData('index') === 'return') {
+        this.scene.launch('MainMenu')
+        this.scene.remove('LevelSelect')
+      } else if (button.getData('index').includes('level')) {
+        game.scene.add('GameScene', new Scene_game(), true, {level: button.getData('index').split(" ")[1]})
+        game.scene.add('UIScene', new Scene_UI(), true)
+        this.scene.remove('LevelSelect')
+        //launch and then remove scene to prevent crash on stopping a paused matter physics
+        this.scene.launch('MainMenu')
+        this.scene.remove('MainMenu')
+      }
+
+
+    }, this);
+  }
+
+  addButton(x, y, text, scene) {
+    var button = this.add.sprite(x, y, 'button', 0).setInteractive()
+    button.setData('index', scene)
+    var startText = this.add.bitmapText(x, y, 'editundo', text)
+    button.displayWidth = startText.width*1.3
+    startText.setOrigin(0.5,0.5)
+  }
+
+  destroy() {
+    this.destroyed = true;
+    this.events.off("shutdown", this.destroy, this);
+    this.events.off("destroy", this.destroy, this);
+
+    this.input.off('gameobjectover', function (pointer, button){})
+    this.input.off('gameobjectout', function (pointer, button){})
+    this.input.off('gameobjectup', function (pointer, button){})
+  }
+
+}
+
 class Scene_loading extends Phaser.Scene {
 
   constructor ()
@@ -1811,6 +1899,7 @@ class Scene_loading extends Phaser.Scene {
     this.load.spritesheet('tiles_factory', 'assets/maps/tiles_factory.png', {frameWidth: 32, frameHeight: 32});
     this.load.spritesheet('tiles_tutorial', 'assets/maps/tiles_tutorial.png', {frameWidth: 32, frameHeight: 32});
     this.load.spritesheet('player', 'assets/mage_placeholder.png', {frameWidth: 32, frameHeight: 32});
+    this.load.spritesheet('teleport', 'assets/teleport_placeholder.png', {frameWidth: 32, frameHeight: 32});
     this.load.spritesheet('button', 'assets/button.png', {frameWidth: 128, frameHeight: 48});
 
     this.load.audio('step1', 'assets/sound/stepLeft3.mp3')
@@ -1831,6 +1920,7 @@ class Scene_loading extends Phaser.Scene {
   }
 
   create () {
+    //make animations
     game.scene.add('MainMenu', new Scene_menu(), true)
     this.scene.remove('Loading')
   }

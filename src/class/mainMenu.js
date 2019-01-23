@@ -8,6 +8,7 @@ class Scene_menu extends Phaser.Scene {
   create() {
     this.add.image(480, 360, 'bg_menu');
     this.addButton(550, 200, "start", "start")
+    this.addButton(550, 250, "level select", "level select")
     this.addButton(550, 300, "credits", "credits")
 
     this.input.on('gameobjectover', function (pointer, button)
@@ -25,6 +26,9 @@ class Scene_menu extends Phaser.Scene {
         game.scene.add('GameScene', new Scene_game(), true)
         game.scene.add('UIScene', new Scene_UI(), true)
         this.scene.remove('MainMenu')
+      } else if (button.getData('index') === 'level select') {
+        game.scene.add('LevelSelect', new Scene_levelSelect(), true)
+        this.scene.stop('MainMenu')
       } else if (button.getData('index') === 'credits') {
         game.scene.add('Credits', new Scene_credits(), true)
         this.scene.stop('MainMenu')
@@ -34,15 +38,11 @@ class Scene_menu extends Phaser.Scene {
     }, this);
   }
 
-  update () {
-    // game.scene.add('GameScene', new Scene_game(), true)
-    // game.scene.add('UIScene', new Scene_UI(), true)
-  }
-
   addButton(x, y, text, scene) {
     var button = this.add.sprite(x, y, 'button', 0).setInteractive()
     button.setData('index', scene)
     var startText = this.add.bitmapText(x, y, 'editundo', text)
+    button.displayWidth = startText.width*1.3
     startText.setOrigin(0.5,0.5)
   }
 
