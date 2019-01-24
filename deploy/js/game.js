@@ -147,12 +147,14 @@ class Book extends Interactive{
    * @return {string}            text formatted into lines
    */
   addLineBreaks(text, maxLetters) {
-    const split = text.split(/( )/g);
+    const split = text.split(/( |\n)/g);
+    console.log(text)
+    console.log(split)
     let lines = [];
 
     function nextLine() {
       let newLine = "";
-      while (`${newLine} ${split[0]}`.length < maxLetters && split.length) {
+      while (`${newLine} ${split[0]}`.length < maxLetters && split.length && !newLine.includes("\n")) {
         newLine += split.shift();
       }
       lines.push(newLine.trim());
@@ -1268,6 +1270,7 @@ class Scene_game extends Phaser.Scene {
     super('GameScene');
     this.books = [];
     this.trail = [];
+    this.bgMusic = null;
   }
 
   focusPlayer() {
@@ -1317,8 +1320,6 @@ class Scene_game extends Phaser.Scene {
       frameRate: 12,
       repeat: -1
     });
-
-    this.bgMusic = null;
   }
 
   create () {
@@ -1474,8 +1475,6 @@ class Scene_game extends Phaser.Scene {
         // origin of (0.5, 0.5)
         var bookBody = this.add
           .existing(new Book(this, x, y, tileSheet, 40, book));
-
-        this.books[this.books.length] = bookBody;
       });
     }
 
@@ -1972,8 +1971,6 @@ class Scene_UI extends Phaser.Scene {
 
     create () {
       this.add.image(480, 30, 'ui');
-      this.levelText = this.add.bitmapText(20,20, 'editundo', 'Level: 0');
-      this.levelText.setTint(0xcf4ed8);
 
       this.manaText = this.add.bitmapText(200,20, 'editundo', 'Mana: ');
       this.manaText.setTint(0xcf4ed8);
@@ -1985,6 +1982,9 @@ class Scene_UI extends Phaser.Scene {
 
       //  Grab a reference to the Game Scene
       this.gameScene = game.scene.getScene('GameScene');
+
+      this.levelText = this.add.bitmapText(20,20, 'editundo', 'Level: ' + this.gameScene.level);
+      this.levelText.setTint(0xcf4ed8);
 
       // Listen to events to change the tooltip
       this.gameScene.events.on('changeTooltip', function (text) {

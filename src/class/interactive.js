@@ -61,12 +61,14 @@ class Book extends Interactive{
    * @return {string}            text formatted into lines
    */
   addLineBreaks(text, maxLetters) {
-    const split = text.split(/( )/g);
+    const split = text.split(/( |\n)/g);
+    console.log(text)
+    console.log(split)
     let lines = [];
 
     function nextLine() {
       let newLine = "";
-      while (`${newLine} ${split[0]}`.length < maxLetters && split.length) {
+      while (`${newLine} ${split[0]}`.length < maxLetters && split.length && !newLine.includes("\n")) {
         newLine += split.shift();
       }
       lines.push(newLine.trim());

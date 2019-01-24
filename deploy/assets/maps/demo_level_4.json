@@ -143,7 +143,25 @@
          "draworder":"topdown",
          "id":4,
          "name":"books",
-         "objects":[],
+         "objects":[
+                {
+                 "gid":41,
+                 "height":32,
+                 "id":156,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"text",
+                         "type":"string",
+                         "value":"funds keep being diverted, but it's leaving us with leaking pipes again. Makes my job harder. \n\n\n\n\n\nI found out a barrier spell can hold back or redirect the lava for a short time, I need to remember to tell the rest of the crew this. \n\nI reckon max is the one to talk to about this."
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":32,
+                 "x":160,
+                 "y":1568
+                }],
          "opacity":1,
          "type":"objectgroup",
          "visible":true,
@@ -919,7 +937,7 @@
          "y":0
         }],
  "nextlayerid":19,
- "nextobjectid":156,
+ "nextobjectid":158,
  "orientation":"orthogonal",
  "renderorder":"left-down",
  "tiledversion":"1.2.1",

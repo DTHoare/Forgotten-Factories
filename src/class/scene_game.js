@@ -9,6 +9,7 @@ class Scene_game extends Phaser.Scene {
     super('GameScene');
     this.books = [];
     this.trail = [];
+    this.bgMusic = null;
   }
 
   focusPlayer() {
@@ -58,8 +59,6 @@ class Scene_game extends Phaser.Scene {
       frameRate: 12,
       repeat: -1
     });
-
-    this.bgMusic = null;
   }
 
   create () {
@@ -215,8 +214,6 @@ class Scene_game extends Phaser.Scene {
         // origin of (0.5, 0.5)
         var bookBody = this.add
           .existing(new Book(this, x, y, tileSheet, 40, book));
-
-        this.books[this.books.length] = bookBody;
       });
     }
 

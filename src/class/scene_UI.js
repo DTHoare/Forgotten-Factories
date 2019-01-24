@@ -18,8 +18,6 @@ class Scene_UI extends Phaser.Scene {
 
     create () {
       this.add.image(480, 30, 'ui');
-      this.levelText = this.add.bitmapText(20,20, 'editundo', 'Level: 0');
-      this.levelText.setTint(0xcf4ed8);
 
       this.manaText = this.add.bitmapText(200,20, 'editundo', 'Mana: ');
       this.manaText.setTint(0xcf4ed8);
@@ -31,6 +29,9 @@ class Scene_UI extends Phaser.Scene {
 
       //  Grab a reference to the Game Scene
       this.gameScene = game.scene.getScene('GameScene');
+
+      this.levelText = this.add.bitmapText(20,20, 'editundo', 'Level: ' + this.gameScene.level);
+      this.levelText.setTint(0xcf4ed8);
 
       // Listen to events to change the tooltip
       this.gameScene.events.on('changeTooltip', function (text) {
