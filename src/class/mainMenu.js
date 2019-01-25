@@ -23,8 +23,7 @@ class Scene_menu extends Phaser.Scene {
     this.input.on('gameobjectup', function (pointer, button)
     {
       if(button.getData('index') === 'start') {
-        game.scene.add('GameScene', new Scene_game(), true)
-        game.scene.add('UIScene', new Scene_UI(), true)
+        game.scene.add('Message', new Scene_message(), true)
         this.scene.remove('MainMenu')
       } else if (button.getData('index') === 'level select') {
         game.scene.add('LevelSelect', new Scene_levelSelect(), true)

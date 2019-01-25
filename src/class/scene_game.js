@@ -135,7 +135,9 @@ class Scene_game extends Phaser.Scene {
         map = this.make.tilemap({key: 'map6'});
         tileSheet = "tiles_factory"
         doorGraphic = "door_factory"
-        bg = this.add.image(480, 360, 'bg_inside');
+        bg = this.add.image(480, 360, 'bg_end');
+        this.bgMusic.stop()
+        this.bgMusic = null;
         break;
     }
     bg.setScrollFactor(0)
@@ -272,6 +274,14 @@ class Scene_game extends Phaser.Scene {
       breakableLayer.objects.forEach(breakable => {
         const { x, y, width, height } = breakable;
         var breakableBody = this.add.existing(new Breakable(this, x, y, tileSheet, breakable));
+      });
+    }
+
+    var pickupLayer = map.getObjectLayer("pickup")
+    if (pickupLayer) {
+      pickupLayer.objects.forEach(pickup => {
+        const { x, y, width, height } = pickup;
+        var pickupBody = this.add.existing(new Pickup(this, x, y, tileSheet, 43, pickup));
       });
     }
 

@@ -20,11 +20,17 @@ class Scene_levelEnd extends Phaser.Scene {
     }
 
     create () {
+      this.sound.play('winMusic')
+      this.add.image(480, 360, 'bg_win');
       //this.add.bitmapText(220,180, 'editundo', 'Level ' + this.level + ' complete!');
 
-      //this.add.bitmapText(220,380, 'editundo', 'Press space for the next level.');
+      this.add.bitmapText(420,80, 'editundo', 'Congratulations!');
 
-      this.keySpace = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+      this.add.bitmapText(480,150, 'editundo', 'This is truly a');
+      this.add.bitmapText(465,180, 'editundo', 'very important find.');
+
+      //this.add.bitmapText(420,230, 'editundo', 'You have proved yourself a true explorer.');
+
     }
 
 
@@ -33,9 +39,7 @@ class Scene_levelEnd extends Phaser.Scene {
      *
      */
     update () {
-      if (Phaser.Input.Keyboard.JustUp(this.keySpace)) {
-        this.scene.start('GameScene', {level: this.nextLevel});
-      }
+
 
 
     }

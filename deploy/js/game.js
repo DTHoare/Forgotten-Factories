@@ -250,6 +250,25 @@ class Goal extends Interactive{
   }
 }
 
+class Pickup extends Interactive{
+
+  constructor(scene, x, y, texture, id, objectConfig){
+      super(scene, x, y, texture, id, objectConfig);
+  }
+
+
+  /**
+   * activate -
+   */
+  activate() {
+    game.scene.add('levelEndScene', Scene_levelEnd, true)
+    //this.scene.bgMusic.stop()
+    this.scene.scene.remove('GameScene')
+    //this.scene.scene.start('levelEndScene', {level: this.scene.sys.settings.data.level, nextLevel: this.properties["level"]});
+
+  }
+}
+
 class Scene_menu extends Phaser.Scene {
 
   constructor ()
@@ -275,8 +294,7 @@ class Scene_menu extends Phaser.Scene {
     this.input.on('gameobjectup', function (pointer, button)
     {
       if(button.getData('index') === 'start') {
-        game.scene.add('GameScene', new Scene_game(), true)
-        game.scene.add('UIScene', new Scene_UI(), true)
+        game.scene.add('Message', new Scene_message(), true)
         this.scene.remove('MainMenu')
       } else if (button.getData('index') === 'level select') {
         game.scene.add('LevelSelect', new Scene_levelSelect(), true)
@@ -425,6 +443,9 @@ class Player extends Phaser.Physics.Matter.Sprite{
                 this.scene.events.emit('changeTooltip', "Q to pull");
               } else if (gameObjectB instanceof Goal) {
                 this.scene.events.emit('changeTooltip', "Q to finish level")
+              }
+              else if (gameObjectB instanceof Pickup) {
+                this.scene.events.emit('changeTooltip', "Q to pick up")
               }
 
             }
@@ -1243,9 +1264,10 @@ class Scene_credits extends Phaser.Scene {
 
   create () {
     this.add.bitmapText(100, 200, 'editundo', "Created by Daniel Hoare")
-    this.add.bitmapText(50, 400, 'editundo', "'Almost New' & 'Intended Force' - Kevin MacLeod (incompetech.com)")
-    this.add.bitmapText(50, 450, 'editundo', "Licensed under Creative Commons: By Attribution 3.0")
-    this.add.bitmapText(100, 600, 'editundo', "Special thanks to Joellen <3")
+    this.add.bitmapText(50, 400, 'editundo', "'Almost New', 'Intended Force' & 'Heroic Age'")
+    this.add.bitmapText(50, 430, 'editundo', "       - Kevin MacLeod (incompetech.com)")
+    this.add.bitmapText(50, 460, 'editundo', "Licensed under Creative Commons: By Attribution 3.0")
+    this.add.bitmapText(100, 600, 'editundo', "Special thanks to Joellen for her patience")
 
     var text = this.add.bitmapText(300, 50, 'editundo', "Click to return")
     text.setTint(0xcf4ed8)
@@ -1396,7 +1418,9 @@ class Scene_game extends Phaser.Scene {
         map = this.make.tilemap({key: 'map6'});
         tileSheet = "tiles_factory"
         doorGraphic = "door_factory"
-        bg = this.add.image(480, 360, 'bg_inside');
+        bg = this.add.image(480, 360, 'bg_end');
+        this.bgMusic.stop()
+        this.bgMusic = null;
         break;
     }
     bg.setScrollFactor(0)
@@ -1533,6 +1557,14 @@ class Scene_game extends Phaser.Scene {
       breakableLayer.objects.forEach(breakable => {
         const { x, y, width, height } = breakable;
         var breakableBody = this.add.existing(new Breakable(this, x, y, tileSheet, breakable));
+      });
+    }
+
+    var pickupLayer = map.getObjectLayer("pickup")
+    if (pickupLayer) {
+      pickupLayer.objects.forEach(pickup => {
+        const { x, y, width, height } = pickup;
+        var pickupBody = this.add.existing(new Pickup(this, x, y, tileSheet, 43, pickup));
       });
     }
 
@@ -1798,11 +1830,17 @@ class Scene_levelEnd extends Phaser.Scene {
     }
 
     create () {
+      this.sound.play('winMusic')
+      this.add.image(480, 360, 'bg_win');
       //this.add.bitmapText(220,180, 'editundo', 'Level ' + this.level + ' complete!');
 
-      //this.add.bitmapText(220,380, 'editundo', 'Press space for the next level.');
+      this.add.bitmapText(420,80, 'editundo', 'Congratulations!');
 
-      this.keySpace = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+      this.add.bitmapText(480,150, 'editundo', 'This is truly a');
+      this.add.bitmapText(465,180, 'editundo', 'very important find.');
+
+      //this.add.bitmapText(420,230, 'editundo', 'You have proved yourself a true explorer.');
+
     }
 
 
@@ -1811,9 +1849,7 @@ class Scene_levelEnd extends Phaser.Scene {
      *
      */
     update () {
-      if (Phaser.Input.Keyboard.JustUp(this.keySpace)) {
-        this.scene.start('GameScene', {level: this.nextLevel});
-      }
+
 
 
     }
@@ -1905,6 +1941,8 @@ class Scene_loading extends Phaser.Scene {
     this.load.image('bg_menu', 'assets/bg_menu.png');
     this.load.image('bg_outside', 'assets/bg_1.png');
     this.load.image('bg_inside', 'assets/bg_2.png');
+    this.load.image('bg_end', 'assets/bg_end.png');
+    this.load.image('bg_win', 'assets/bg_win.png');
 
     // map made with Tiled in JSON format
     this.load.tilemapTiledJSON('map0', 'assets/maps/demo_level_0.json');
@@ -1938,6 +1976,7 @@ class Scene_loading extends Phaser.Scene {
 
     this.load.audio('outdoorMusic', 'assets/sound/Almost New.mp3')
     this.load.audio('indoorMusic', 'assets/sound/Intended Force.mp3')
+    this.load.audio('winMusic', 'assets/sound/Heroic Age.mp3')
 
 
     this.load.image('ui', 'assets/UI_placeholder.png');
@@ -1947,6 +1986,31 @@ class Scene_loading extends Phaser.Scene {
     //make animations
     game.scene.add('MainMenu', new Scene_menu(), true)
     this.scene.remove('Loading')
+  }
+
+}
+
+class Scene_message extends Phaser.Scene {
+
+  constructor ()
+  {
+    super('Message');
+  }
+
+  create () {
+    this.add.bitmapText(200, 150, 'editundo', "You must prove yourself.")
+    this.add.bitmapText(200, 250, 'editundo', "Explore the world.")
+    this.add.bitmapText(200, 350, 'editundo', "Return with something of value.")
+
+    var text = this.add.bitmapText(300, 550, 'editundo', "Click to Continue")
+    text.setTint(0xcf4ed8)
+
+    this.input.on("pointerup", function() {
+      game.scene.add('GameScene', new Scene_game(), true)
+      game.scene.add('UIScene', new Scene_UI(), true)
+      this.scene.remove("Message")
+    }, this)
+
   }
 
 }

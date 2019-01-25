@@ -22,6 +22,8 @@ class Scene_loading extends Phaser.Scene {
     this.load.image('bg_menu', 'assets/bg_menu.png');
     this.load.image('bg_outside', 'assets/bg_1.png');
     this.load.image('bg_inside', 'assets/bg_2.png');
+    this.load.image('bg_end', 'assets/bg_end.png');
+    this.load.image('bg_win', 'assets/bg_win.png');
 
     // map made with Tiled in JSON format
     this.load.tilemapTiledJSON('map0', 'assets/maps/demo_level_0.json');
@@ -55,6 +57,7 @@ class Scene_loading extends Phaser.Scene {
 
     this.load.audio('outdoorMusic', 'assets/sound/Almost New.mp3')
     this.load.audio('indoorMusic', 'assets/sound/Intended Force.mp3')
+    this.load.audio('winMusic', 'assets/sound/Heroic Age.mp3')
 
 
     this.load.image('ui', 'assets/UI_placeholder.png');

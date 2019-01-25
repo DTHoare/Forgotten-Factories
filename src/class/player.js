@@ -124,6 +124,9 @@ class Player extends Phaser.Physics.Matter.Sprite{
               } else if (gameObjectB instanceof Goal) {
                 this.scene.events.emit('changeTooltip', "Q to finish level")
               }
+              else if (gameObjectB instanceof Pickup) {
+                this.scene.events.emit('changeTooltip', "Q to pick up")
+              }
 
             }
           },

@@ -163,3 +163,22 @@ class Goal extends Interactive{
 
   }
 }
+
+class Pickup extends Interactive{
+
+  constructor(scene, x, y, texture, id, objectConfig){
+      super(scene, x, y, texture, id, objectConfig);
+  }
+
+
+  /**
+   * activate -
+   */
+  activate() {
+    game.scene.add('levelEndScene', Scene_levelEnd, true)
+    //this.scene.bgMusic.stop()
+    this.scene.scene.remove('GameScene')
+    //this.scene.scene.start('levelEndScene', {level: this.scene.sys.settings.data.level, nextLevel: this.properties["level"]});
+
+  }
+}
