@@ -279,6 +279,9 @@ class Barrier extends Structure {
   }
 
   destroy() {
+    if(this.destroyed) {
+      return;
+    }
     this.scene.events.off("preupdate", this.update, this);
     super.destroy()
   }
