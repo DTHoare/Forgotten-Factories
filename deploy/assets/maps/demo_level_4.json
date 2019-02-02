@@ -608,7 +608,7 @@
                         {
                          "name":"lifetime",
                          "type":"string",
-                         "value":"45"
+                         "value":"40"
                         }, 
                         {
                          "name":"period",
@@ -646,7 +646,7 @@
                         {
                          "name":"lifetime",
                          "type":"string",
-                         "value":"45"
+                         "value":"40"
                         }, 
                         {
                          "name":"period",
