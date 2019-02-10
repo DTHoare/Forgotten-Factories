@@ -136,6 +136,7 @@ class Projectile_Teleport extends Projectile{
 
     this.scene.focusPlayer();
     this.scene.focus = player;
+    player.state.mana = 100
   }
 
   checkCollisions(event) {
