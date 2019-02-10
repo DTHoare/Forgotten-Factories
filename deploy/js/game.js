@@ -1454,6 +1454,17 @@ class Scene_game extends Phaser.Scene {
         map = this.make.tilemap({key: 'map7'});
         tileSheet = "tiles_factory"
         doorGraphic = "door_factory"
+        bg = this.add.image(480, 360, 'bg_inside');
+        this.matter.world.setGravity(0,0)
+        if(!this.bgMusic) {
+          this.bgMusic = this.sound.add('indoorMusic', {loop: true})
+          this.bgMusic.play();
+        }
+        break;
+      case "end":
+        map = this.make.tilemap({key: 'mapend'});
+        tileSheet = "tiles_factory"
+        doorGraphic = "door_factory"
         bg = this.add.image(480, 360, 'bg_end');
         this.bgMusic.stop()
         this.bgMusic = null;
@@ -1921,8 +1932,11 @@ class Scene_levelSelect extends Phaser.Scene {
   create() {
     this.add.image(480, 360, 'bg_menu');
     this.addButton(250, 50, "return", "return")
-    for(var i = 0; i <= 6; i++) {
-      this.addButton(450, 150+30*i, "Level "+i, "level "+i)
+    for(var i = 0; i <= 7; i++) {
+      var nrow = 4
+      var xi = i % nrow
+      var yi = Math.floor(i/nrow)
+      this.addButton(450+ 160*yi, 150+30*xi, "Level "+i, "level "+i)
     }
 
 
@@ -2009,8 +2023,9 @@ class Scene_loading extends Phaser.Scene {
     this.load.tilemapTiledJSON('map4', 'assets/maps/demo_level_4.json');
     this.load.tilemapTiledJSON('map5', 'assets/maps/demo_level_5.json');
     this.load.tilemapTiledJSON('map6', 'assets/maps/demo_level_6.json');
+    this.load.tilemapTiledJSON('map7', 'assets/maps/demo_level_7.json');
 
-    this.load.tilemapTiledJSON('map7', 'assets/maps/demo_level_end.json');
+    this.load.tilemapTiledJSON('mapend', 'assets/maps/demo_level_end.json');
 
     // tiles in spritesheet
     this.load.spritesheet('tiles', 'assets/maps/tiles_placeholder.png', {frameWidth: 32, frameHeight: 32});

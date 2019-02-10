@@ -34,8 +34,9 @@ class Scene_loading extends Phaser.Scene {
     this.load.tilemapTiledJSON('map4', 'assets/maps/demo_level_4.json');
     this.load.tilemapTiledJSON('map5', 'assets/maps/demo_level_5.json');
     this.load.tilemapTiledJSON('map6', 'assets/maps/demo_level_6.json');
+    this.load.tilemapTiledJSON('map7', 'assets/maps/demo_level_7.json');
 
-    this.load.tilemapTiledJSON('map7', 'assets/maps/demo_level_end.json');
+    this.load.tilemapTiledJSON('mapend', 'assets/maps/demo_level_end.json');
 
     // tiles in spritesheet
     this.load.spritesheet('tiles', 'assets/maps/tiles_placeholder.png', {frameWidth: 32, frameHeight: 32});

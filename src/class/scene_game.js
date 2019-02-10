@@ -147,6 +147,17 @@ class Scene_game extends Phaser.Scene {
         map = this.make.tilemap({key: 'map7'});
         tileSheet = "tiles_factory"
         doorGraphic = "door_factory"
+        bg = this.add.image(480, 360, 'bg_inside');
+        this.matter.world.setGravity(0,0)
+        if(!this.bgMusic) {
+          this.bgMusic = this.sound.add('indoorMusic', {loop: true})
+          this.bgMusic.play();
+        }
+        break;
+      case "end":
+        map = this.make.tilemap({key: 'mapend'});
+        tileSheet = "tiles_factory"
+        doorGraphic = "door_factory"
         bg = this.add.image(480, 360, 'bg_end');
         this.bgMusic.stop()
         this.bgMusic = null;
