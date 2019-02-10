@@ -282,6 +282,12 @@ class Scene_menu extends Phaser.Scene {
     this.addButton(550, 250, "level select", "level select")
     this.addButton(550, 300, "credits", "credits")
 
+    if (mute) {
+      var soundButton = this.addButton(550, 350, "Unmute", "Mute")
+    } else {
+      var soundButton = this.addButton(550, 350, "Mute", "Mute")
+    }
+
     this.input.on('gameobjectover', function (pointer, button)
     {
         button.setFrame(1);
@@ -302,6 +308,14 @@ class Scene_menu extends Phaser.Scene {
       } else if (button.getData('index') === 'credits') {
         game.scene.add('Credits', new Scene_credits(), true)
         this.scene.stop('MainMenu')
+      } else if(button.getData('index') === 'Mute') {
+        if(mute) {
+          mute = false
+          soundButton.setText("Mute")
+        } else {
+          mute = true
+          soundButton.setText("Unmute")
+        }
       }
 
 
@@ -314,6 +328,15 @@ class Scene_menu extends Phaser.Scene {
     var startText = this.add.bitmapText(x, y, 'editundo', text)
     button.displayWidth = startText.width*1.3
     startText.setOrigin(0.5,0.5)
+    var buttonObj = {
+      button: button,
+      text: startText,
+      setText(str) {
+        this.text.setText(str);
+        this.button.displayWidth = this.text.width*1.3;
+      }
+    }
+    return buttonObj
   }
 
 }
@@ -1350,6 +1373,8 @@ class Scene_game extends Phaser.Scene {
     var tileSheet;
     var bg;
     var doorGraphic;
+
+    this.checkSound()
     // load the map
     switch (this.level) {
       case "0":
@@ -1599,6 +1624,7 @@ class Scene_game extends Phaser.Scene {
     this.keyE = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
     this.keyQ = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Q);
     this.keySpace = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    this.keyEsc = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
 
     /**
      * On preupdate make target for bubble spell appear - so that it can collide before spell cast event
@@ -1611,6 +1637,7 @@ class Scene_game extends Phaser.Scene {
      *     physics engine at the right time to prevent glitching through walls
      */
     this.events.on("update", this.castSpell, this);
+    this.events.on("checkSound", this.checkSound, this);
 
     this.events.on("shutdown", this.destroy, this);
     this.events.on("destroy", this.destroy, this);
@@ -1682,6 +1709,14 @@ class Scene_game extends Phaser.Scene {
       //playerProjectiles[playerProjectiles.length] = projectile;
 
       player.state.endCharge();
+    }
+  }
+
+  checkSound() {
+    if(mute) {
+      this.sound.setMute(true)
+    } else {
+      this.sound.setMute(false)
     }
   }
 
@@ -1806,6 +1841,14 @@ class Scene_game extends Phaser.Scene {
       player.interact();
     }
 
+    if (Phaser.Input.Keyboard.JustDown(this.keyEsc)) {
+      player.state.endCharge();
+      game.scene.add('PauseScene', Scene_pause, true);
+      game.scene.start('PauseScene');
+      this.events.emit('changeTooltip', "Q or Esc to close");
+      this.scene.pause();
+      this.matter.world.pause();
+    }
 
   }
 
@@ -1815,6 +1858,8 @@ class Scene_game extends Phaser.Scene {
     this.events.off("destroy", this.destroy, this);
     this.events.off("preupdate", this.bubbleTarget, this);
     this.events.off("update", this.castSpell, this);
+    this.events.off("checkSound", this.checkSound, this);
+
   }
 }
 
@@ -2024,6 +2069,135 @@ class Scene_message extends Phaser.Scene {
 
   }
 
+}
+
+
+/**
+ * Scene used for displaying book text on user interaction
+ */
+class Scene_pause extends Phaser.Scene {
+
+    constructor ()
+    {
+        super({ key: 'PauseScene', active: true });
+        this.text = "test";
+        this.helpText = "Q to close"
+        this.textLeft;
+        this.textRight;
+    }
+
+    preload () {
+      this.load.image('book', 'assets/book_placeholder.png');
+    }
+
+    create () {
+      this.add.image(480, 400, 'book');
+
+      var bookLetter = this.add.bitmapText(100, 170, 'editundo', "PAUSED");
+      bookLetter.setFontSize(-80);
+      bookLetter.setTint(0x000000);
+
+      var text = this.add.bitmapText(100, 270, 'editundo', "Options");
+      text.setTint(0x000000);
+
+      this.keyQ = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Q);
+      this.keyEsc = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
+
+
+
+      // Buttons on menu
+      //
+
+      this.addButton(690, 350, "Resume", "Resume")
+      this.addButton(690, 380, "Main Menu", "Main Menu")
+      if (mute) {
+        var soundButton = this.addButton(150, 350, "Unmute", "Mute")
+      } else {
+        var soundButton = this.addButton(150, 350, "Mute", "Mute")
+      }
+
+      this.input.on('gameobjectover', function (pointer, button)
+      {
+          button.setFrame(1);
+      }, this);
+      this.input.on('gameobjectout', function (pointer, button)
+      {
+          button.setFrame(0);
+      }, this);
+
+      this.input.on('gameobjectup', function (pointer, button)
+      {
+        if(button.getData('index') === 'Resume') {
+          pointer.justUp = false;
+          game.scene.resume('GameScene');
+          game.scene.getScene('GameScene').matter.world.resume();
+          //this.scene.stop();
+          game.scene.remove('PauseScene');
+        } else if (button.getData('index') === 'Main Menu') {
+          game.scene.add('MainMenu', new Scene_menu(), true)
+          this.scene.remove('PauseScene')
+          //launch and then remove scene to prevent crash on stopping a paused matter physics
+          this.scene.launch('GameScene')
+          if(game.scene.getScene('GameScene').bgMusic) {
+            game.scene.getScene('GameScene').bgMusic.stop()
+            game.scene.getScene('GameScene').bgMusic = null;
+          }
+          this.scene.remove('GameScene')
+          game.scene.remove('UIScene');
+        } else if(button.getData('index') === 'Mute') {
+          if(mute) {
+            mute = false
+            soundButton.setText("Mute")
+          } else {
+            mute = true
+            soundButton.setText("Unmute")
+          }
+          game.scene.getScene('GameScene').events.emit("checkSound")
+        }
+
+
+      }, this);
+
+    }
+
+    update () {
+      //resume the game and close this scene
+      if (Phaser.Input.Keyboard.JustDown(this.keyQ) || Phaser.Input.Keyboard.JustDown(this.keyEsc)) {
+        game.scene.resume('GameScene');
+        game.scene.getScene('GameScene').matter.world.resume();
+        //this.scene.stop();
+        game.scene.remove('PauseScene');
+      }
+
+    }
+
+    addButton(x, y, text, scene) {
+      var button = this.add.sprite(x, y, 'button', 0).setInteractive()
+      button.setData('index', scene)
+      var startText = this.add.bitmapText(x, y, 'editundo', text)
+      button.displayWidth = startText.width*1.3
+      startText.setOrigin(0.5,0.5)
+      startText.setTint(0x000000);
+      var buttonObj = {
+        button: button,
+        text: startText,
+        setText(str) {
+          this.text.setText(str);
+          this.button.displayWidth = this.text.width*1.3;
+        }
+      }
+      return buttonObj
+    }
+
+    destroy() {
+      this.destroyed = true;
+      this.events.off("shutdown", this.destroy, this);
+      this.events.off("destroy", this.destroy, this);
+
+      this.input.off('gameobjectover', function (pointer, button){})
+      this.input.off('gameobjectout', function (pointer, button){})
+      this.input.off('gameobjectup', function (pointer, button){})
+    }
 }
 
 
@@ -2453,7 +2627,7 @@ var config = {
 var game = new Phaser.Game(config);
 game.scene.add('Loading', new Scene_loading(), true)
 
-
+var mute = false
 var player;
 var playerProjectiles = [];
 var particles = [];

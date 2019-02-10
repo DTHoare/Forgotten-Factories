@@ -67,6 +67,8 @@ class Scene_game extends Phaser.Scene {
     var tileSheet;
     var bg;
     var doorGraphic;
+
+    this.checkSound()
     // load the map
     switch (this.level) {
       case "0":
@@ -316,6 +318,7 @@ class Scene_game extends Phaser.Scene {
     this.keyE = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
     this.keyQ = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Q);
     this.keySpace = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    this.keyEsc = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
 
     /**
      * On preupdate make target for bubble spell appear - so that it can collide before spell cast event
@@ -328,6 +331,7 @@ class Scene_game extends Phaser.Scene {
      *     physics engine at the right time to prevent glitching through walls
      */
     this.events.on("update", this.castSpell, this);
+    this.events.on("checkSound", this.checkSound, this);
 
     this.events.on("shutdown", this.destroy, this);
     this.events.on("destroy", this.destroy, this);
@@ -399,6 +403,14 @@ class Scene_game extends Phaser.Scene {
       //playerProjectiles[playerProjectiles.length] = projectile;
 
       player.state.endCharge();
+    }
+  }
+
+  checkSound() {
+    if(mute) {
+      this.sound.setMute(true)
+    } else {
+      this.sound.setMute(false)
     }
   }
 
@@ -523,6 +535,14 @@ class Scene_game extends Phaser.Scene {
       player.interact();
     }
 
+    if (Phaser.Input.Keyboard.JustDown(this.keyEsc)) {
+      player.state.endCharge();
+      game.scene.add('PauseScene', Scene_pause, true);
+      game.scene.start('PauseScene');
+      this.events.emit('changeTooltip', "Q or Esc to close");
+      this.scene.pause();
+      this.matter.world.pause();
+    }
 
   }
 
@@ -532,5 +552,7 @@ class Scene_game extends Phaser.Scene {
     this.events.off("destroy", this.destroy, this);
     this.events.off("preupdate", this.bubbleTarget, this);
     this.events.off("update", this.castSpell, this);
+    this.events.off("checkSound", this.checkSound, this);
+
   }
 }
