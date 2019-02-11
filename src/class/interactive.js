@@ -130,6 +130,9 @@ class Lever extends Interactive{
    */
   activate() {
     this.setFlipX(!this.flipX);
+    if (this.properties["setGravity"]) {
+      this.scene.matter.world.setGravity(0, parseFloat(this.properties["setGravity"]))
+    }
     var moveX = "0";
     var moveY = "0";
     if (this.properties["moveX"]) {moveX = this.properties["moveX"];}

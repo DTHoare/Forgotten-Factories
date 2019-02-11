@@ -7,7 +7,7 @@ class Scene_credits extends Phaser.Scene {
 
   create () {
     this.add.bitmapText(100, 200, 'editundo', "Created by Daniel Hoare")
-    this.add.bitmapText(50, 400, 'editundo', "'Almost New', 'Intended Force' & 'Heroic Age'")
+    this.add.bitmapText(50, 400, 'editundo', "'Almost New', 'Intended Force', 'Heroic Age' & 'Floating Cities'")
     this.add.bitmapText(50, 430, 'editundo', "       - Kevin MacLeod (incompetech.com)")
     this.add.bitmapText(50, 460, 'editundo', "Licensed under Creative Commons: By Attribution 3.0")
     this.add.bitmapText(100, 600, 'editundo', "Special thanks to Joellen for her patience")

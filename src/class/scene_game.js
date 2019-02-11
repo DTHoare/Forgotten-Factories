@@ -145,12 +145,14 @@ class Scene_game extends Phaser.Scene {
         break;
       case "7":
         map = this.make.tilemap({key: 'map7'});
-        tileSheet = "tiles_factory"
+        tileSheet = "tiles_space"
         doorGraphic = "door_factory"
-        bg = this.add.image(480, 360, 'bg_inside');
+        bg = this.add.image(480, 360, 'bg_space');
         this.matter.world.setGravity(0,0)
+        this.sound.stopAll()
+        this.bgMusic = null;
         if(!this.bgMusic) {
-          this.bgMusic = this.sound.add('indoorMusic', {loop: true})
+          this.bgMusic = this.sound.add('spaceMusic', {loop: true})
           this.bgMusic.play();
         }
         break;
@@ -305,6 +307,22 @@ class Scene_game extends Phaser.Scene {
       pickupLayer.objects.forEach(pickup => {
         const { x, y, width, height } = pickup;
         var pickupBody = this.add.existing(new Pickup(this, x, y, tileSheet, 43, pickup));
+      });
+    }
+
+    var laserLayer = map.getObjectLayer("lasers")
+    if (laserLayer) {
+      laserLayer.objects.forEach(laser => {
+        const { x, y, width, height } = laser;
+        var laserBody = this.add.existing(new Laser(this, x, y, doorGraphic, laser));
+      });
+    }
+
+    var decorationLayer = map.getObjectLayer("decoration")
+    if (decorationLayer) {
+      decorationLayer.objects.forEach(decoration => {
+        const { x, y, width, height } = decoration;
+        var decorationBody = this.add.existing(new Structure(this, x, y, tileSheet, decoration));
       });
     }
 

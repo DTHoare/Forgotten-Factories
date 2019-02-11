@@ -216,6 +216,9 @@ class Lever extends Interactive{
    */
   activate() {
     this.setFlipX(!this.flipX);
+    if (this.properties["setGravity"]) {
+      this.scene.matter.world.setGravity(0, parseFloat(this.properties["setGravity"]))
+    }
     var moveX = "0";
     var moveY = "0";
     if (this.properties["moveX"]) {moveX = this.properties["moveX"];}
@@ -1288,7 +1291,7 @@ class Scene_credits extends Phaser.Scene {
 
   create () {
     this.add.bitmapText(100, 200, 'editundo', "Created by Daniel Hoare")
-    this.add.bitmapText(50, 400, 'editundo', "'Almost New', 'Intended Force' & 'Heroic Age'")
+    this.add.bitmapText(50, 400, 'editundo', "'Almost New', 'Intended Force', 'Heroic Age' & 'Floating Cities'")
     this.add.bitmapText(50, 430, 'editundo', "       - Kevin MacLeod (incompetech.com)")
     this.add.bitmapText(50, 460, 'editundo', "Licensed under Creative Commons: By Attribution 3.0")
     this.add.bitmapText(100, 600, 'editundo', "Special thanks to Joellen for her patience")
@@ -1452,12 +1455,14 @@ class Scene_game extends Phaser.Scene {
         break;
       case "7":
         map = this.make.tilemap({key: 'map7'});
-        tileSheet = "tiles_factory"
+        tileSheet = "tiles_space"
         doorGraphic = "door_factory"
-        bg = this.add.image(480, 360, 'bg_inside');
+        bg = this.add.image(480, 360, 'bg_space');
         this.matter.world.setGravity(0,0)
+        this.sound.stopAll()
+        this.bgMusic = null;
         if(!this.bgMusic) {
-          this.bgMusic = this.sound.add('indoorMusic', {loop: true})
+          this.bgMusic = this.sound.add('spaceMusic', {loop: true})
           this.bgMusic.play();
         }
         break;
@@ -1612,6 +1617,22 @@ class Scene_game extends Phaser.Scene {
       pickupLayer.objects.forEach(pickup => {
         const { x, y, width, height } = pickup;
         var pickupBody = this.add.existing(new Pickup(this, x, y, tileSheet, 43, pickup));
+      });
+    }
+
+    var laserLayer = map.getObjectLayer("lasers")
+    if (laserLayer) {
+      laserLayer.objects.forEach(laser => {
+        const { x, y, width, height } = laser;
+        var laserBody = this.add.existing(new Laser(this, x, y, doorGraphic, laser));
+      });
+    }
+
+    var decorationLayer = map.getObjectLayer("decoration")
+    if (decorationLayer) {
+      decorationLayer.objects.forEach(decoration => {
+        const { x, y, width, height } = decoration;
+        var decorationBody = this.add.existing(new Structure(this, x, y, tileSheet, decoration));
       });
     }
 
@@ -2011,6 +2032,7 @@ class Scene_loading extends Phaser.Scene {
     this.load.image('bg_menu', 'assets/bg_menu.png');
     this.load.image('bg_outside', 'assets/bg_1.png');
     this.load.image('bg_inside', 'assets/bg_2.png');
+    this.load.image('bg_space', 'assets/bg_space.png');
     this.load.image('bg_end', 'assets/bg_end.png');
     this.load.image('bg_win', 'assets/bg_win.png');
 
@@ -2031,6 +2053,7 @@ class Scene_loading extends Phaser.Scene {
     this.load.spritesheet('tiles', 'assets/maps/tiles_placeholder.png', {frameWidth: 32, frameHeight: 32});
     this.load.spritesheet('tiles_out', 'assets/maps/tiles_outdoors.png', {frameWidth: 32, frameHeight: 32});
     this.load.spritesheet('tiles_factory', 'assets/maps/tiles_factory.png', {frameWidth: 32, frameHeight: 32});
+    this.load.spritesheet('tiles_space', 'assets/maps/tiles_space.png', {frameWidth: 32, frameHeight: 32});
     this.load.spritesheet('tiles_tutorial', 'assets/maps/tiles_tutorial.png', {frameWidth: 32, frameHeight: 32});
     this.load.spritesheet('player', 'assets/mage_placeholder.png', {frameWidth: 32, frameHeight: 32});
     this.load.spritesheet('teleport', 'assets/teleport_placeholder.png', {frameWidth: 32, frameHeight: 32});
@@ -2048,6 +2071,7 @@ class Scene_loading extends Phaser.Scene {
 
     this.load.audio('outdoorMusic', 'assets/sound/Almost New.mp3')
     this.load.audio('indoorMusic', 'assets/sound/Intended Force.mp3')
+    this.load.audio('spaceMusic', 'assets/sound/Floating Cities.mp3')
     this.load.audio('winMusic', 'assets/sound/Heroic Age.mp3')
 
 
@@ -2608,6 +2632,52 @@ class Breakable extends Structure {
   destroy() {
     this.scene.events.off("postupdate", this.breakTile, this);
     this.scene.matterCollision.removeOnCollideStart({objectA: this})
+    this.scene.events.off("preupdate", this.update, this);
+    super.destroy()
+  }
+}
+
+class Laser extends Structure {
+  constructor(scene, x, y, texture, objectConfig){
+    super(scene, x, y, texture, objectConfig)
+    this.isLethal = true
+
+    this.originalWidth = objectConfig.width
+    this.period = 50;
+    this.duration = 10;
+    this.age = 0;
+    if (this.properties["period"]) {
+      this.period = parseInt(this.properties["period"])
+    }
+    if (this.properties["duration"]) {
+      this.duration = parseFloat(this.properties["duration"])
+    }
+
+    this.scene.events.on("preupdate", this.update, this);
+  }
+
+  update() {
+    this.age = (this.age + 1) % this.period
+    if (this.age === (this.period - this.duration)) {
+      //laser firing
+      this.isLethal = true
+      this.setCollisionCategory(collision_block);
+      this.displayWidth = this.originalWidth
+    } else if (this.age === (this.period - this.duration - 25)) {
+      //laser aiming
+      this.setCollisionCategory(collision_ghost);
+      this.isLethal = false
+      this.displayWidth = this.originalWidth / 10.
+      this.visible = true
+    } else if (this.age === 0) {
+      //laser off
+      this.setCollisionCategory(collision_ghost);
+      this.isLethal = false
+      this.visible = false
+    }
+  }
+
+  destroy() {
     this.scene.events.off("preupdate", this.update, this);
     super.destroy()
   }

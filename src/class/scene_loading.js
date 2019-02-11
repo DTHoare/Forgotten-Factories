@@ -22,6 +22,7 @@ class Scene_loading extends Phaser.Scene {
     this.load.image('bg_menu', 'assets/bg_menu.png');
     this.load.image('bg_outside', 'assets/bg_1.png');
     this.load.image('bg_inside', 'assets/bg_2.png');
+    this.load.image('bg_space', 'assets/bg_space.png');
     this.load.image('bg_end', 'assets/bg_end.png');
     this.load.image('bg_win', 'assets/bg_win.png');
 
@@ -42,6 +43,7 @@ class Scene_loading extends Phaser.Scene {
     this.load.spritesheet('tiles', 'assets/maps/tiles_placeholder.png', {frameWidth: 32, frameHeight: 32});
     this.load.spritesheet('tiles_out', 'assets/maps/tiles_outdoors.png', {frameWidth: 32, frameHeight: 32});
     this.load.spritesheet('tiles_factory', 'assets/maps/tiles_factory.png', {frameWidth: 32, frameHeight: 32});
+    this.load.spritesheet('tiles_space', 'assets/maps/tiles_space.png', {frameWidth: 32, frameHeight: 32});
     this.load.spritesheet('tiles_tutorial', 'assets/maps/tiles_tutorial.png', {frameWidth: 32, frameHeight: 32});
     this.load.spritesheet('player', 'assets/mage_placeholder.png', {frameWidth: 32, frameHeight: 32});
     this.load.spritesheet('teleport', 'assets/teleport_placeholder.png', {frameWidth: 32, frameHeight: 32});
@@ -59,6 +61,7 @@ class Scene_loading extends Phaser.Scene {
 
     this.load.audio('outdoorMusic', 'assets/sound/Almost New.mp3')
     this.load.audio('indoorMusic', 'assets/sound/Intended Force.mp3')
+    this.load.audio('spaceMusic', 'assets/sound/Floating Cities.mp3')
     this.load.audio('winMusic', 'assets/sound/Heroic Age.mp3')
 
 
