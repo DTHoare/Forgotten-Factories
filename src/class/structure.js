@@ -2,7 +2,7 @@
 /**
  * Structure are objects in the environment that are not tiles
  */
-class Structure extends Phaser.Physics.Matter.Image{
+class Structure extends Phaser.Physics.Matter.Sprite{
 
   constructor(scene, x, y, texture, objectConfig){
     if (!objectConfig.gid) {
@@ -326,6 +326,7 @@ class Laser extends Structure {
   constructor(scene, x, y, texture, objectConfig){
     super(scene, x, y, texture, objectConfig)
     this.isLethal = true
+    this.body.isSensor = true
 
     this.originalWidth = objectConfig.width
     this.period = 50;
@@ -337,28 +338,50 @@ class Laser extends Structure {
     if (this.properties["duration"]) {
       this.duration = parseFloat(this.properties["duration"])
     }
+    if (this.properties["age"]) {
+      this.age = parseFloat(this.properties["age"])
+    }
+
+    const anims = scene.anims;
+    anims.create({
+      key: "laser-fire",
+      frames: anims.generateFrameNumbers(texture, { start: 0, end: 3 }),
+      frameRate: 12,
+      repeat: -1
+    });
+    anims.create({
+      key: "laser-aim",
+      frames: anims.generateFrameNumbers(texture, { start: 4, end: 6 }),
+      frameRate: 12,
+      repeat: -1
+    });
+    anims.create({
+      key: "laser-off",
+      frames: anims.generateFrameNumbers(texture, { start: 7, end: 7 }),
+      frameRate: 6,
+      repeat: -1
+    });
 
     this.scene.events.on("preupdate", this.update, this);
   }
 
   update() {
     this.age = (this.age + 1) % this.period
-    if (this.age === (this.period - this.duration)) {
+    if (this.age >= (this.period - this.duration)) {
       //laser firing
       this.isLethal = true
       this.setCollisionCategory(collision_block);
-      this.displayWidth = this.originalWidth
-    } else if (this.age === (this.period - this.duration - 25)) {
+      this.anims.play("laser-fire", true);
+    } else if (this.age >= (this.period - this.duration - 35)) {
       //laser aiming
       this.setCollisionCategory(collision_ghost);
       this.isLethal = false
-      this.displayWidth = this.originalWidth / 10.
-      this.visible = true
-    } else if (this.age === 0) {
+      this.anims.play("laser-aim", true);
+    } else {
       //laser off
       this.setCollisionCategory(collision_ghost);
       this.isLethal = false
-      this.visible = false
+      this.anims.play("laser-off", true);
     }
   }
 

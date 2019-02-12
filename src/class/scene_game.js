@@ -146,7 +146,7 @@ class Scene_game extends Phaser.Scene {
       case "7":
         map = this.make.tilemap({key: 'map7'});
         tileSheet = "tiles_space"
-        doorGraphic = "door_factory"
+        doorGraphic = "door_space"
         bg = this.add.image(480, 360, 'bg_space');
         this.matter.world.setGravity(0,0)
         this.sound.stopAll()
@@ -314,7 +314,7 @@ class Scene_game extends Phaser.Scene {
     if (laserLayer) {
       laserLayer.objects.forEach(laser => {
         const { x, y, width, height } = laser;
-        var laserBody = this.add.existing(new Laser(this, x, y, doorGraphic, laser));
+        var laserBody = this.add.existing(new Laser(this, x, y, 'laser', laser));
       });
     }
 
@@ -325,6 +325,7 @@ class Scene_game extends Phaser.Scene {
         var decorationBody = this.add.existing(new Structure(this, x, y, tileSheet, decoration));
       });
     }
+    console.log(tiles)
 
 
     // add spawn point and player
@@ -467,7 +468,7 @@ class Scene_game extends Phaser.Scene {
           this.trail[this.trail.length-1].setTint(0x60fcff);
           this.trail[this.trail.length-1].setAlpha(1 - i/14.);
 
-          projectile.body.force.y = projectile.body.mass * 2 * 0.001;
+          projectile.body.force.y = projectile.body.mass * this.matter.world.localWorld.gravity.y * 0.001;
 
           Phaser.Physics.Matter.Matter.Body.update(projectile.body, 16.67, 1, 1);
           projectile.limitSpeed();

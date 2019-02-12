@@ -17,6 +17,7 @@ class Scene_loading extends Phaser.Scene {
     this.load.image('bubble', 'assets/bubble_placeholder.png');
     this.load.image('door_outdoors', 'assets/door_outdoors.png');
     this.load.image('door_factory', 'assets/door_factory.png');
+    this.load.image('door_space', 'assets/door_space.png');
     this.load.image('barrier', 'assets/barrier.png');
 
     this.load.image('bg_menu', 'assets/bg_menu.png');
@@ -48,6 +49,7 @@ class Scene_loading extends Phaser.Scene {
     this.load.spritesheet('player', 'assets/mage_placeholder.png', {frameWidth: 32, frameHeight: 32});
     this.load.spritesheet('teleport', 'assets/teleport_placeholder.png', {frameWidth: 32, frameHeight: 32});
     this.load.spritesheet('button', 'assets/button.png', {frameWidth: 128, frameHeight: 48});
+    this.load.spritesheet('laser', 'assets/laser.png', {frameWidth: 16, frameHeight: 160});
 
     this.load.audio('step1', 'assets/sound/stepLeft3.mp3')
     this.load.audio('step2', 'assets/sound/stepRight3.mp3')

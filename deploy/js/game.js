@@ -1456,7 +1456,7 @@ class Scene_game extends Phaser.Scene {
       case "7":
         map = this.make.tilemap({key: 'map7'});
         tileSheet = "tiles_space"
-        doorGraphic = "door_factory"
+        doorGraphic = "door_space"
         bg = this.add.image(480, 360, 'bg_space');
         this.matter.world.setGravity(0,0)
         this.sound.stopAll()
@@ -1624,7 +1624,7 @@ class Scene_game extends Phaser.Scene {
     if (laserLayer) {
       laserLayer.objects.forEach(laser => {
         const { x, y, width, height } = laser;
-        var laserBody = this.add.existing(new Laser(this, x, y, doorGraphic, laser));
+        var laserBody = this.add.existing(new Laser(this, x, y, 'laser', laser));
       });
     }
 
@@ -1635,6 +1635,7 @@ class Scene_game extends Phaser.Scene {
         var decorationBody = this.add.existing(new Structure(this, x, y, tileSheet, decoration));
       });
     }
+    console.log(tiles)
 
 
     // add spawn point and player
@@ -1777,7 +1778,7 @@ class Scene_game extends Phaser.Scene {
           this.trail[this.trail.length-1].setTint(0x60fcff);
           this.trail[this.trail.length-1].setAlpha(1 - i/14.);
 
-          projectile.body.force.y = projectile.body.mass * 2 * 0.001;
+          projectile.body.force.y = projectile.body.mass * this.matter.world.localWorld.gravity.y * 0.001;
 
           Phaser.Physics.Matter.Matter.Body.update(projectile.body, 16.67, 1, 1);
           projectile.limitSpeed();
@@ -2027,6 +2028,7 @@ class Scene_loading extends Phaser.Scene {
     this.load.image('bubble', 'assets/bubble_placeholder.png');
     this.load.image('door_outdoors', 'assets/door_outdoors.png');
     this.load.image('door_factory', 'assets/door_factory.png');
+    this.load.image('door_space', 'assets/door_space.png');
     this.load.image('barrier', 'assets/barrier.png');
 
     this.load.image('bg_menu', 'assets/bg_menu.png');
@@ -2058,6 +2060,7 @@ class Scene_loading extends Phaser.Scene {
     this.load.spritesheet('player', 'assets/mage_placeholder.png', {frameWidth: 32, frameHeight: 32});
     this.load.spritesheet('teleport', 'assets/teleport_placeholder.png', {frameWidth: 32, frameHeight: 32});
     this.load.spritesheet('button', 'assets/button.png', {frameWidth: 128, frameHeight: 48});
+    this.load.spritesheet('laser', 'assets/laser.png', {frameWidth: 16, frameHeight: 160});
 
     this.load.audio('step1', 'assets/sound/stepLeft3.mp3')
     this.load.audio('step2', 'assets/sound/stepRight3.mp3')
@@ -2317,7 +2320,7 @@ class Scene_UI extends Phaser.Scene {
 /**
  * Structure are objects in the environment that are not tiles
  */
-class Structure extends Phaser.Physics.Matter.Image{
+class Structure extends Phaser.Physics.Matter.Sprite{
 
   constructor(scene, x, y, texture, objectConfig){
     if (!objectConfig.gid) {
@@ -2641,6 +2644,7 @@ class Laser extends Structure {
   constructor(scene, x, y, texture, objectConfig){
     super(scene, x, y, texture, objectConfig)
     this.isLethal = true
+    this.body.isSensor = true
 
     this.originalWidth = objectConfig.width
     this.period = 50;
@@ -2652,28 +2656,50 @@ class Laser extends Structure {
     if (this.properties["duration"]) {
       this.duration = parseFloat(this.properties["duration"])
     }
+    if (this.properties["age"]) {
+      this.age = parseFloat(this.properties["age"])
+    }
+
+    const anims = scene.anims;
+    anims.create({
+      key: "laser-fire",
+      frames: anims.generateFrameNumbers(texture, { start: 0, end: 3 }),
+      frameRate: 12,
+      repeat: -1
+    });
+    anims.create({
+      key: "laser-aim",
+      frames: anims.generateFrameNumbers(texture, { start: 4, end: 6 }),
+      frameRate: 12,
+      repeat: -1
+    });
+    anims.create({
+      key: "laser-off",
+      frames: anims.generateFrameNumbers(texture, { start: 7, end: 7 }),
+      frameRate: 6,
+      repeat: -1
+    });
 
     this.scene.events.on("preupdate", this.update, this);
   }
 
   update() {
     this.age = (this.age + 1) % this.period
-    if (this.age === (this.period - this.duration)) {
+    if (this.age >= (this.period - this.duration)) {
       //laser firing
       this.isLethal = true
       this.setCollisionCategory(collision_block);
-      this.displayWidth = this.originalWidth
-    } else if (this.age === (this.period - this.duration - 25)) {
+      this.anims.play("laser-fire", true);
+    } else if (this.age >= (this.period - this.duration - 35)) {
       //laser aiming
       this.setCollisionCategory(collision_ghost);
       this.isLethal = false
-      this.displayWidth = this.originalWidth / 10.
-      this.visible = true
-    } else if (this.age === 0) {
+      this.anims.play("laser-aim", true);
+    } else {
       //laser off
       this.setCollisionCategory(collision_ghost);
       this.isLethal = false
-      this.visible = false
+      this.anims.play("laser-off", true);
     }
   }
 
