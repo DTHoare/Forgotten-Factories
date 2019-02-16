@@ -10,16 +10,17 @@ class Scene_game extends Phaser.Scene {
     this.books = [];
     this.trail = [];
     this.bgMusic = null;
+    this.cameraOffset = 150;
   }
 
   focusPlayer() {
     this.focus = player
-    this.cameras.main.startFollow(player, true, 0.5, 0.5, 0, 150);
+    this.cameras.main.startFollow(player, true, 0.5, 0.5, 0, this.cameraOffset);
   }
 
   focusObject(obj) {
     this.focus = obj
-    this.cameras.main.startFollow(obj, true, 0.5, 0.5, 0, 150);
+    this.cameras.main.startFollow(obj, true, 0.5, 0.5, 0, this.cameraOffset);
   }
 
   init(data) {
@@ -155,6 +156,18 @@ class Scene_game extends Phaser.Scene {
           this.bgMusic = this.sound.add('spaceMusic', {loop: true})
           this.bgMusic.play();
         }
+        break;
+      case "8":
+        map = this.make.tilemap({key: 'map8'});
+        tileSheet = "tiles_space"
+        doorGraphic = "door_space"
+        bg = this.add.image(480, 360, 'bg_space');
+        this.matter.world.setGravity(0,0.7)
+        if(!this.bgMusic) {
+          this.bgMusic = this.sound.add('spaceMusic', {loop: true})
+          this.bgMusic.play();
+        }
+        this.cameraOffset = -150
         break;
       case "end":
         map = this.make.tilemap({key: 'mapend'});

@@ -1320,16 +1320,17 @@ class Scene_game extends Phaser.Scene {
     this.books = [];
     this.trail = [];
     this.bgMusic = null;
+    this.cameraOffset = 150;
   }
 
   focusPlayer() {
     this.focus = player
-    this.cameras.main.startFollow(player, true, 0.5, 0.5, 0, 150);
+    this.cameras.main.startFollow(player, true, 0.5, 0.5, 0, this.cameraOffset);
   }
 
   focusObject(obj) {
     this.focus = obj
-    this.cameras.main.startFollow(obj, true, 0.5, 0.5, 0, 150);
+    this.cameras.main.startFollow(obj, true, 0.5, 0.5, 0, this.cameraOffset);
   }
 
   init(data) {
@@ -1465,6 +1466,18 @@ class Scene_game extends Phaser.Scene {
           this.bgMusic = this.sound.add('spaceMusic', {loop: true})
           this.bgMusic.play();
         }
+        break;
+      case "8":
+        map = this.make.tilemap({key: 'map8'});
+        tileSheet = "tiles_space"
+        doorGraphic = "door_space"
+        bg = this.add.image(480, 360, 'bg_space');
+        this.matter.world.setGravity(0,0.7)
+        if(!this.bgMusic) {
+          this.bgMusic = this.sound.add('spaceMusic', {loop: true})
+          this.bgMusic.play();
+        }
+        this.cameraOffset = -150
         break;
       case "end":
         map = this.make.tilemap({key: 'mapend'});
@@ -1954,8 +1967,8 @@ class Scene_levelSelect extends Phaser.Scene {
   create() {
     this.add.image(480, 360, 'bg_menu');
     this.addButton(250, 50, "return", "return")
-    for(var i = 0; i <= 7; i++) {
-      var nrow = 4
+    for(var i = 0; i <= 8; i++) {
+      var nrow = 5
       var xi = i % nrow
       var yi = Math.floor(i/nrow)
       this.addButton(450+ 160*yi, 150+30*xi, "Level "+i, "level "+i)
@@ -2048,6 +2061,7 @@ class Scene_loading extends Phaser.Scene {
     this.load.tilemapTiledJSON('map5', 'assets/maps/demo_level_5.json');
     this.load.tilemapTiledJSON('map6', 'assets/maps/demo_level_6.json');
     this.load.tilemapTiledJSON('map7', 'assets/maps/demo_level_7.json');
+    this.load.tilemapTiledJSON('map8', 'assets/maps/demo_level_8.json');
 
     this.load.tilemapTiledJSON('mapend', 'assets/maps/demo_level_end.json');
 
