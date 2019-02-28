@@ -8,7 +8,7 @@ class Scene_levelSelect extends Phaser.Scene {
   create() {
     this.add.image(480, 360, 'bg_menu');
     this.addButton(250, 50, "return", "return")
-    for(var i = 0; i <= 8; i++) {
+    for(var i = 0; i <= 9; i++) {
       var nrow = 5
       var xi = i % nrow
       var yi = Math.floor(i/nrow)

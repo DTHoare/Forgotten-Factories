@@ -169,6 +169,18 @@ class Scene_game extends Phaser.Scene {
         }
         this.cameraOffset = -150
         break;
+      case "9":
+        map = this.make.tilemap({key: 'map9'});
+        tileSheet = "tiles_factory"
+        doorGraphic = "door_factory"
+        bg = this.add.image(480, 360, 'bg_inside');
+        this.sound.stopAll()
+        this.bgMusic = null;
+        if(!this.bgMusic) {
+          this.bgMusic = this.sound.add('indoorMusic', {loop: true})
+          this.bgMusic.play();
+        }
+        break;
       case "end":
         map = this.make.tilemap({key: 'mapend'});
         tileSheet = "tiles_factory"

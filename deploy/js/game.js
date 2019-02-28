@@ -1479,6 +1479,18 @@ class Scene_game extends Phaser.Scene {
         }
         this.cameraOffset = -150
         break;
+      case "9":
+        map = this.make.tilemap({key: 'map9'});
+        tileSheet = "tiles_factory"
+        doorGraphic = "door_factory"
+        bg = this.add.image(480, 360, 'bg_inside');
+        this.sound.stopAll()
+        this.bgMusic = null;
+        if(!this.bgMusic) {
+          this.bgMusic = this.sound.add('indoorMusic', {loop: true})
+          this.bgMusic.play();
+        }
+        break;
       case "end":
         map = this.make.tilemap({key: 'mapend'});
         tileSheet = "tiles_factory"
@@ -1967,7 +1979,7 @@ class Scene_levelSelect extends Phaser.Scene {
   create() {
     this.add.image(480, 360, 'bg_menu');
     this.addButton(250, 50, "return", "return")
-    for(var i = 0; i <= 8; i++) {
+    for(var i = 0; i <= 9; i++) {
       var nrow = 5
       var xi = i % nrow
       var yi = Math.floor(i/nrow)
@@ -2062,6 +2074,7 @@ class Scene_loading extends Phaser.Scene {
     this.load.tilemapTiledJSON('map6', 'assets/maps/demo_level_6.json');
     this.load.tilemapTiledJSON('map7', 'assets/maps/demo_level_7.json');
     this.load.tilemapTiledJSON('map8', 'assets/maps/demo_level_8.json');
+    this.load.tilemapTiledJSON('map9', 'assets/maps/demo_level_9.json');
 
     this.load.tilemapTiledJSON('mapend', 'assets/maps/demo_level_end.json');
 
