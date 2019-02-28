@@ -29,6 +29,7 @@ class Scene_game extends Phaser.Scene {
     if (!data.level) {
       this.level = "0"
     }
+    this.cameraOffset = 150;
     this.events.emit("postInit");
   }
 

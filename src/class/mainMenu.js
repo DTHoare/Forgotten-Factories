@@ -12,9 +12,15 @@ class Scene_menu extends Phaser.Scene {
     this.addButton(550, 300, "credits", "credits")
 
     if (mute) {
-      var soundButton = this.addButton(550, 350, "Unmute", "Mute")
+      var soundButton = this.addButton(800, 650, "Unmute", "Mute")
     } else {
-      var soundButton = this.addButton(550, 350, "Mute", "Mute")
+      var soundButton = this.addButton(800, 650, "Mute", "Mute")
+    }
+
+    if (invincible) {
+      var invincibleButton = this.addButton(800, 700, "Turn off invincible", "Invincible")
+    } else {
+      var invincibleButton = this.addButton(800, 700, "Turn on invincible", "Invincible")
     }
 
     this.input.on('gameobjectover', function (pointer, button)
@@ -44,6 +50,15 @@ class Scene_menu extends Phaser.Scene {
         } else {
           mute = true
           soundButton.setText("Unmute")
+        }
+      }
+      else if(button.getData('index') === 'Invincible') {
+        if(invincible) {
+          invincible = false
+          invincibleButton.setText("Turn on invincible")
+        } else {
+          invincible = true
+          invincibleButton.setText("Turn off invincible")
         }
       }
 

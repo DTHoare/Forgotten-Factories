@@ -141,7 +141,7 @@ class Player extends Phaser.Physics.Matter.Sprite{
               this.resetPosition = {x:gameObjectB.x, y:gameObjectB.y}
             }
 
-            if(gameObjectB.isLethal  && this.scene.focus === this) {
+            if(gameObjectB.isLethal  && this.scene.focus === this && !invincible) {
               this.death(this.x, this.y);
             }
             if(this.body.speed > 6.) {

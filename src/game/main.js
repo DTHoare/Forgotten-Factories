@@ -29,6 +29,7 @@ var game = new Phaser.Game(config);
 game.scene.add('Loading', new Scene_loading(), true)
 
 var mute = false
+var invincible = false
 var player;
 var playerProjectiles = [];
 var particles = [];

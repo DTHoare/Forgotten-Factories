@@ -181,7 +181,7 @@ class Projectile_Teleport extends Projectile{
         }
 
       }
-      if(otherBody.gameObject.isLethal) {
+      if(otherBody.gameObject.isLethal && !invincible) {
         player.death(this.x, this.y)
         this.destroy()
         this.fail = true;

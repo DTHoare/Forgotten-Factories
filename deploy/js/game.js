@@ -286,9 +286,15 @@ class Scene_menu extends Phaser.Scene {
     this.addButton(550, 300, "credits", "credits")
 
     if (mute) {
-      var soundButton = this.addButton(550, 350, "Unmute", "Mute")
+      var soundButton = this.addButton(800, 650, "Unmute", "Mute")
     } else {
-      var soundButton = this.addButton(550, 350, "Mute", "Mute")
+      var soundButton = this.addButton(800, 650, "Mute", "Mute")
+    }
+
+    if (invincible) {
+      var invincibleButton = this.addButton(800, 700, "Turn off invincible", "Invincible")
+    } else {
+      var invincibleButton = this.addButton(800, 700, "Turn on invincible", "Invincible")
     }
 
     this.input.on('gameobjectover', function (pointer, button)
@@ -318,6 +324,15 @@ class Scene_menu extends Phaser.Scene {
         } else {
           mute = true
           soundButton.setText("Unmute")
+        }
+      }
+      else if(button.getData('index') === 'Invincible') {
+        if(invincible) {
+          invincible = false
+          invincibleButton.setText("Turn on invincible")
+        } else {
+          invincible = true
+          invincibleButton.setText("Turn off invincible")
         }
       }
 
@@ -487,7 +502,7 @@ class Player extends Phaser.Physics.Matter.Sprite{
               this.resetPosition = {x:gameObjectB.x, y:gameObjectB.y}
             }
 
-            if(gameObjectB.isLethal  && this.scene.focus === this) {
+            if(gameObjectB.isLethal  && this.scene.focus === this && !invincible) {
               this.death(this.x, this.y);
             }
             if(this.body.speed > 6.) {
@@ -961,7 +976,7 @@ class Projectile_Teleport extends Projectile{
         }
 
       }
-      if(otherBody.gameObject.isLethal) {
+      if(otherBody.gameObject.isLethal && !invincible) {
         player.death(this.x, this.y)
         this.destroy()
         this.fail = true;
@@ -1339,6 +1354,7 @@ class Scene_game extends Phaser.Scene {
     if (!data.level) {
       this.level = "0"
     }
+    this.cameraOffset = 150;
     this.events.emit("postInit");
   }
 
@@ -2186,6 +2202,12 @@ class Scene_pause extends Phaser.Scene {
         var soundButton = this.addButton(150, 350, "Mute", "Mute")
       }
 
+      if (invincible) {
+        var invincibleButton = this.addButton(250, 450, "Turn off invincible", "Invincible")
+      } else {
+        var invincibleButton = this.addButton(250, 450, "Turn on invincible", "Invincible")
+      }
+
       this.input.on('gameobjectover', function (pointer, button)
       {
           button.setFrame(1);
@@ -2223,6 +2245,15 @@ class Scene_pause extends Phaser.Scene {
             soundButton.setText("Unmute")
           }
           game.scene.getScene('GameScene').events.emit("checkSound")
+        }
+        else if(button.getData('index') === 'Invincible') {
+          if(invincible) {
+            invincible = false
+            invincibleButton.setText("Turn on invincible")
+          } else {
+            invincible = true
+            invincibleButton.setText("Turn off invincible")
+          }
         }
 
 
@@ -2671,7 +2702,7 @@ class Laser extends Structure {
   constructor(scene, x, y, texture, objectConfig){
     super(scene, x, y, texture, objectConfig)
     this.isLethal = true
-    this.body.isSensor = true
+    //this.body.isSensor = true
 
     this.originalWidth = objectConfig.width
     this.period = 50;
@@ -2767,6 +2798,7 @@ var game = new Phaser.Game(config);
 game.scene.add('Loading', new Scene_loading(), true)
 
 var mute = false
+var invincible = false
 var player;
 var playerProjectiles = [];
 var particles = [];

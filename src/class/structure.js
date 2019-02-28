@@ -326,7 +326,7 @@ class Laser extends Structure {
   constructor(scene, x, y, texture, objectConfig){
     super(scene, x, y, texture, objectConfig)
     this.isLethal = true
-    this.body.isSensor = true
+    //this.body.isSensor = true
 
     this.originalWidth = objectConfig.width
     this.period = 50;
