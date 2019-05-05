@@ -650,8 +650,8 @@
                  "type":"",
                  "visible":true,
                  "width":32,
-                 "x":767.83,
-                 "y":346.422
+                 "x":770.33,
+                 "y":348.922
                 }, 
                 {
                  "gid":45,
@@ -662,8 +662,8 @@
                  "type":"",
                  "visible":true,
                  "width":32,
-                 "x":807.83,
-                 "y":324.422
+                 "x":806.83,
+                 "y":325.422
                 }, 
                 {
                  "gid":45,
@@ -811,7 +811,7 @@
                         {
                          "name":"period",
                          "type":"string",
-                         "value":"75"
+                         "value":"125"
                         }],
                  "rotation":0,
                  "type":"",
@@ -828,7 +828,7 @@
                         {
                          "name":"duration",
                          "type":"string",
-                         "value":"25"
+                         "value":"15"
                         }, 
                         {
                          "name":"period",
@@ -899,12 +899,12 @@
                         {
                          "name":"duration",
                          "type":"string",
-                         "value":"40"
+                         "value":"70"
                         }, 
                         {
                          "name":"period",
                          "type":"string",
-                         "value":"80"
+                         "value":"140"
                         }],
                  "rotation":0,
                  "type":"",
@@ -1385,12 +1385,12 @@
                         {
                          "name":"duration",
                          "type":"string",
-                         "value":"10"
+                         "value":"70"
                         }, 
                         {
                          "name":"period",
                          "type":"string",
-                         "value":"10"
+                         "value":"100"
                         }],
                  "rotation":-945,
                  "type":"",
@@ -1430,14 +1430,14 @@
                         {
                          "name":"text",
                          "type":"string",
-                         "value":"part 8 of ?\n\nWhere am I? Is that the moon...?\n\n@$#\u00a3! I've started floating around, I can't tell what ways up and whats down.\n\nI found a switch that turned the gravity back on. I need to get out of here. \n"
+                         "value":"part 8 of ?\n\nWhere am I? Is that the moon...?\n\n@$#\u00a3! I've started floating around, I can't tell what ways up and whats down.\n\nIt is pretty up here at least. Reminds me of that fantasy story where the heros go to space to find the sorceress and just act like its no big deal.\n"
                         }],
-                 "rotation":0,
+                 "rotation":-180,
                  "type":"",
                  "visible":true,
                  "width":32,
-                 "x":384,
-                 "y":3328
+                 "x":800,
+                 "y":160
                 }],
          "opacity":1,
          "type":"objectgroup",

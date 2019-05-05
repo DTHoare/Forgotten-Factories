@@ -151,6 +151,11 @@
                          "name":"moveY",
                          "type":"string",
                          "value":"5"
+                        }, 
+                        {
+                         "name":"slow",
+                         "type":"string",
+                         "value":"10"
                         }],
                  "rotation":0,
                  "type":"",

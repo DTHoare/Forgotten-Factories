@@ -121,6 +121,11 @@
                          "name":"moveX",
                          "type":"string",
                          "value":"4"
+                        }, 
+                        {
+                         "name":"slow",
+                         "type":"string",
+                         "value":"10"
                         }],
                  "rotation":0,
                  "type":"",
@@ -144,6 +149,11 @@
                          "name":"moveY",
                          "type":"string",
                          "value":"-4"
+                        }, 
+                        {
+                         "name":"slow",
+                         "type":"string",
+                         "value":"10"
                         }],
                  "rotation":0,
                  "type":"",
@@ -167,6 +177,11 @@
                          "name":"moveY",
                          "type":"string",
                          "value":"5"
+                        }, 
+                        {
+                         "name":"slow",
+                         "type":"string",
+                         "value":"10"
                         }],
                  "rotation":0,
                  "type":"",

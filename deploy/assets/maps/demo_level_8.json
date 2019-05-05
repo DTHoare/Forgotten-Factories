@@ -1280,7 +1280,25 @@
          "draworder":"topdown",
          "id":4,
          "name":"books",
-         "objects":[],
+         "objects":[
+                {
+                 "gid":41,
+                 "height":32,
+                 "id":677,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"text",
+                         "type":"string",
+                         "value":"part 9 of ?\n\nI should feel afraid, unsure if I'll ever get home, but instead I feel peaceful here. It is giving me time to think, time to wonder. \n\nIf I get back, I think I will go on a journey. Find out how the rest of the empire works, what drives the people. Isn't that what I will need to know when I run the factory?\n"
+                        }],
+                 "rotation":-315,
+                 "type":"",
+                 "visible":true,
+                 "width":32,
+                 "x":1729.37258300203,
+                 "y":3520
+                }],
          "opacity":1,
          "type":"objectgroup",
          "visible":true,
@@ -1330,6 +1348,11 @@
                          "name":"moveX",
                          "type":"string",
                          "value":"-8"
+                        }, 
+                        {
+                         "name":"slow",
+                         "type":"string",
+                         "value":"100"
                         }],
                  "rotation":0,
                  "type":"",
@@ -1441,7 +1464,7 @@
          "y":0
         }],
  "nextlayerid":33,
- "nextobjectid":677,
+ "nextobjectid":678,
  "orientation":"orthogonal",
  "renderorder":"left-down",
  "tiledversion":"1.2.1",
