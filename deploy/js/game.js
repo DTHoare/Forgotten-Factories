@@ -1337,16 +1337,18 @@ class Scene_game extends Phaser.Scene {
     this.trail = [];
     this.bgMusic = null;
     this.cameraOffset = 150;
+    this.aimOffsetX = 0;
+    this.aimOffsetY = 0;
   }
 
   focusPlayer() {
     this.focus = player
-    this.cameras.main.startFollow(player, true, 0.5, 0.5, 0, this.cameraOffset);
+    this.cameras.main.startFollow(player, true, 0.5, 0.5, this.aimOffsetX, this.cameraOffset + this.aimOffsetY);
   }
 
   focusObject(obj) {
     this.focus = obj
-    this.cameras.main.startFollow(obj, true, 0.5, 0.5, 0, this.cameraOffset);
+    this.cameras.main.startFollow(obj, true, 0.5, 0.5, this.aimOffsetX, this.cameraOffset + this.aimOffsetY);
   }
 
   init(data) {
@@ -1796,6 +1798,13 @@ class Scene_game extends Phaser.Scene {
     }
   }
 
+  updateAimOffset() {
+    var pointer = game.input.activePointer;
+    this.aimOffsetX = -490 * (pointer.x-config.width/2.) / config.width/2.;
+    this.aimOffsetY = -330 * (pointer.y-config.height/2.) / config.height/2.;
+    this.focusObject(this.focus)
+  }
+
   update () {
     if (this.destroyed) {
       return;
@@ -1838,7 +1847,11 @@ class Scene_game extends Phaser.Scene {
         direction = 'l';
       }
       player.faceDirection(direction);
+
+
     }
+
+    this.updateAimOffset();
 
     player.state.updateMana();
 
@@ -1889,21 +1902,33 @@ class Scene_game extends Phaser.Scene {
       if (player.body.velocity.x > 2) player.setVelocityX(2);
     }
 
-    //instant finish all particles - causes teleport
-    if( this.cursors.down.isDown || this.keyS.isDown) {
-      if (this.focus instanceof Projectile) {
-        this.focus.age = this.focus.maxAge + 1;
-      }
-    }
+    //instant finish all particles - instant teleport
+    // if( this.cursors.down.isDown || this.keyS.isDown) {
+    //   if (this.focus instanceof Projectile) {
+    //     this.focus.age = this.focus.maxAge + 1;
+    //   }
+    // }
 
     //jump on key press, not key down
     // this prevents instant double jumps
     if (Phaser.Input.Keyboard.JustDown(this.cursors.up) || Phaser.Input.Keyboard.JustDown(this.keyW)) {
-      if (player.isTouching.ground) {
+      if (player.isTouching.ground && this.focus == player) {
         player.setVelocityY(-8);
-      } else if (player.state.mana >= 80) {
+      } else if (player.state.mana >= 80 && this.focus == player) {
         this.sound.play('fire', {volume:0.3})
         player.setVelocityY(-10);
+        player.state.spendMana(80);
+        player.jumpParticles(this);
+      }
+    }
+
+    //allow downward 'jumps' in midair
+    if (Phaser.Input.Keyboard.JustDown(this.cursors.down) || Phaser.Input.Keyboard.JustDown(this.keyS)) {
+      if (player.isTouching.ground) {
+        //do nothing
+      } else if (player.state.mana >= 80 && this.focus == player) {
+        this.sound.play('fire', {volume:0.3})
+        player.setVelocityY(10);
         player.state.spendMana(80);
         player.jumpParticles(this);
       }
