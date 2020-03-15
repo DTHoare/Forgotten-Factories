@@ -181,6 +181,7 @@ class Pickup extends Interactive{
     game.scene.add('levelEndScene', Scene_levelEnd, true)
     //this.scene.bgMusic.stop()
     this.scene.scene.remove('GameScene')
+    game.scene.remove('UIScene');
     //this.scene.scene.start('levelEndScene', {level: this.scene.sys.settings.data.level, nextLevel: this.properties["level"]});
 
   }
