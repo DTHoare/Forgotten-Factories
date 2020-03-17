@@ -481,7 +481,6 @@ class Scene_game extends Phaser.Scene {
       var pointer = game.input.activePointer;
       this.aimOffsetX = -620 * (pointer.x-config.width/2.) / config.width/2.;
       this.aimOffsetY = -430 * (pointer.y-config.height/2.) / config.height/2.;
-      console.log(this.aimOffsetX)
       this.focusObject(this.focus)
     }
 
@@ -558,7 +557,7 @@ class Scene_game extends Phaser.Scene {
         } else {
           player.applyForce({x: -airForce, y:0});
         }
-        if (player.body.velocity.x < - 2) player.setVelocityX(-2);
+        if (player.body.velocity.x < (-2+player.floorSpeed)) player.setVelocityX((-2+player.floorSpeed));
 
         player.faceDirection('l');
       } else if (this.focus instanceof Projectile) {
@@ -581,7 +580,7 @@ class Scene_game extends Phaser.Scene {
         var force = new Phaser.Math.Vector2(0.001,0);
         this.focus.applyForce(force);
       }
-      if (player.body.velocity.x > 2) player.setVelocityX(2);
+      if (player.body.velocity.x > (2+player.floorSpeed)) player.setVelocityX((2+player.floorSpeed));
     }
 
     //instant finish all particles - instant teleport

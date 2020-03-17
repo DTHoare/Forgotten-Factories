@@ -10,8 +10,6 @@
 
 * running in debug mode has issues with bitmap texts
 * collisions within bodies not always resolved correctly due to slopes
-* elevators are bumpy rides
-* move speed is not relative to the object being stood on
 
 ## Features:
 
@@ -39,9 +37,6 @@
 
 ## TODO:
 
-* more Spells
-* more levels
-* duel wield spells/balance controls
 * narrative
 * UI upgrade
 * finalise sound

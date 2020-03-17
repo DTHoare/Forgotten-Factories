@@ -419,6 +419,7 @@ class Player extends Phaser.Physics.Matter.Sprite{
         this.state = new PlayerState();
         this.resetPosition = {x:x, y:y}
         this.maxVelocity = 20.
+        this.floorSpeed = 0.
         //this.setCollisionCategory(collision_player);
         //this.setCollidesWith([collision_block, collision_blockPhysical, collision_interactive]);
         this.currentInteractive = null;
@@ -566,8 +567,8 @@ class Player extends Phaser.Physics.Matter.Sprite{
     }
 
     limitSpeed() {
-      if(this.body.speed > this.maxVelocity) {
-        var mult = this.maxVelocity / this.body.speed;
+      if(this.body.speed > (this.maxVelocity)) {
+        var mult = (this.maxVelocity) / this.body.speed;
         this.setVelocityX(this.body.velocity.x * mult);
         this.setVelocityY(this.body.velocity.y * mult);
       }
@@ -614,6 +615,7 @@ class Player extends Phaser.Physics.Matter.Sprite{
         if(this.state.charging === false) {
           this.state.mana = 100
         }
+        this.floorSpeed = bodyB.velocity.x;
       }
     }
 
@@ -621,6 +623,7 @@ class Player extends Phaser.Physics.Matter.Sprite{
       this.isTouching.left = false;
       this.isTouching.right = false;
       this.isTouching.ground = false;
+      this.floorSpeed = 0;
       this.currentInteractive = null;
       this.scene.events.emit('changeTooltip', "");
     }
@@ -1807,7 +1810,6 @@ class Scene_game extends Phaser.Scene {
       var pointer = game.input.activePointer;
       this.aimOffsetX = -620 * (pointer.x-config.width/2.) / config.width/2.;
       this.aimOffsetY = -430 * (pointer.y-config.height/2.) / config.height/2.;
-      console.log(this.aimOffsetX)
       this.focusObject(this.focus)
     }
 
@@ -1884,7 +1886,7 @@ class Scene_game extends Phaser.Scene {
         } else {
           player.applyForce({x: -airForce, y:0});
         }
-        if (player.body.velocity.x < - 2) player.setVelocityX(-2);
+        if (player.body.velocity.x < (-2+player.floorSpeed)) player.setVelocityX((-2+player.floorSpeed));
 
         player.faceDirection('l');
       } else if (this.focus instanceof Projectile) {
@@ -1907,7 +1909,7 @@ class Scene_game extends Phaser.Scene {
         var force = new Phaser.Math.Vector2(0.001,0);
         this.focus.applyForce(force);
       }
-      if (player.body.velocity.x > 2) player.setVelocityX(2);
+      if (player.body.velocity.x > (2+player.floorSpeed)) player.setVelocityX((2+player.floorSpeed));
     }
 
     //instant finish all particles - instant teleport

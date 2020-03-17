@@ -57,6 +57,7 @@ class Player extends Phaser.Physics.Matter.Sprite{
         this.state = new PlayerState();
         this.resetPosition = {x:x, y:y}
         this.maxVelocity = 20.
+        this.floorSpeed = 0.
         //this.setCollisionCategory(collision_player);
         //this.setCollidesWith([collision_block, collision_blockPhysical, collision_interactive]);
         this.currentInteractive = null;
@@ -204,8 +205,8 @@ class Player extends Phaser.Physics.Matter.Sprite{
     }
 
     limitSpeed() {
-      if(this.body.speed > this.maxVelocity) {
-        var mult = this.maxVelocity / this.body.speed;
+      if(this.body.speed > (this.maxVelocity)) {
+        var mult = (this.maxVelocity) / this.body.speed;
         this.setVelocityX(this.body.velocity.x * mult);
         this.setVelocityY(this.body.velocity.y * mult);
       }
@@ -252,6 +253,7 @@ class Player extends Phaser.Physics.Matter.Sprite{
         if(this.state.charging === false) {
           this.state.mana = 100
         }
+        this.floorSpeed = bodyB.velocity.x;
       }
     }
 
@@ -259,6 +261,7 @@ class Player extends Phaser.Physics.Matter.Sprite{
       this.isTouching.left = false;
       this.isTouching.right = false;
       this.isTouching.ground = false;
+      this.floorSpeed = 0;
       this.currentInteractive = null;
       this.scene.events.emit('changeTooltip', "");
     }
