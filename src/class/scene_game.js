@@ -17,12 +17,12 @@ class Scene_game extends Phaser.Scene {
 
   focusPlayer() {
     this.focus = player
-    this.cameras.main.startFollow(player, true, 0.5, 0.5, this.aimOffsetX, this.cameraOffset + this.aimOffsetY);
+    this.cameras.main.startFollow(player, true, 0.2, 0.2, this.aimOffsetX, this.cameraOffset + this.aimOffsetY);
   }
 
   focusObject(obj) {
     this.focus = obj
-    this.cameras.main.startFollow(obj, true, 0.5, 0.5, this.aimOffsetX, this.cameraOffset + this.aimOffsetY);
+    this.cameras.main.startFollow(obj, true, 0.2, 0.2, this.aimOffsetX, this.cameraOffset + this.aimOffsetY);
   }
 
   init(data) {
@@ -367,6 +367,8 @@ class Scene_game extends Phaser.Scene {
     this.focusPlayer();
     this.focus = player;
 
+    this.castingBarrier = false;
+
     //setup keys to be used
     this.cursors = this.input.keyboard.createCursorKeys();
     this.keyW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
@@ -416,6 +418,7 @@ class Scene_game extends Phaser.Scene {
       }
 
       else if(player.state.spell === "barrier") {
+        this.castingBarrier = true;
         player.state.charge = 100
         player.state.mana = 0
 
@@ -453,6 +456,7 @@ class Scene_game extends Phaser.Scene {
         var projectile = this.add.existing( new Projectile_Bubble(this, pointer.x + this.cameras.main.scrollX, pointer.y + this.cameras.main.scrollY, 'bubble',player.state.charge) );
       } else if (player.state.spell ==="barrier") {
         var projectile = player.createBarrier(pointer.downX, pointer.downY, pointer.x, pointer.y)
+        this.castingBarrier = false;
       } else {
         player.state.endCharge();
         return;
@@ -473,10 +477,14 @@ class Scene_game extends Phaser.Scene {
   }
 
   updateAimOffset() {
-    var pointer = game.input.activePointer;
-    this.aimOffsetX = -490 * (pointer.x-config.width/2.) / config.width/2.;
-    this.aimOffsetY = -330 * (pointer.y-config.height/2.) / config.height/2.;
-    this.focusObject(this.focus)
+    if (this.castingBarrier == false) {
+      var pointer = game.input.activePointer;
+      this.aimOffsetX = -620 * (pointer.x-config.width/2.) / config.width/2.;
+      this.aimOffsetY = -430 * (pointer.y-config.height/2.) / config.height/2.;
+      console.log(this.aimOffsetX)
+      this.focusObject(this.focus)
+    }
+
   }
 
   update () {
