@@ -1196,7 +1196,7 @@
                  "y":1632
                 }, 
                 {
-                 "height":128,
+                 "height":409.818181818182,
                  "id":878,
                  "name":"",
                  "rotation":0,
@@ -1204,7 +1204,7 @@
                  "visible":true,
                  "width":96,
                  "x":2176,
-                 "y":1888
+                 "y":1606.18181818182
                 }, 
                 {
                  "height":39.6,
@@ -2208,7 +2208,7 @@
                         {
                          "name":"text",
                          "type":"string",
-                         "value":"part 10 of 10\n\nAccording to my map this is the final room, next stop is just the coffee room. I wonder if anyone will ever read these? I hope you've enjoyed them if you are reading this.\n\nWhat was that noise? \n\nOh no, this cannot be good. I need to go.\n\n"
+                         "value":"We have not recieved any news from outside the factory in 13 days now. God willing, the empress will send us support soon. \n\nThe boot-lickers have blockaded the kitchen, along with the food supplies. We, the heroes of the people, are repurposing some of the factory engines into siege engines. We attack tonight. \n"
                         }],
                  "rotation":0,
                  "type":"",

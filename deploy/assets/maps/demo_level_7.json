@@ -985,7 +985,7 @@
                         {
                          "name":"period",
                          "type":"string",
-                         "value":"180"
+                         "value":"250"
                         }],
                  "rotation":-495,
                  "type":"",
@@ -1012,7 +1012,7 @@
                         {
                          "name":"period",
                          "type":"string",
-                         "value":"180"
+                         "value":"250"
                         }],
                  "rotation":-495,
                  "type":"",
@@ -1039,7 +1039,7 @@
                         {
                          "name":"period",
                          "type":"string",
-                         "value":"180"
+                         "value":"250"
                         }],
                  "rotation":-495,
                  "type":"",
@@ -1066,7 +1066,7 @@
                         {
                          "name":"period",
                          "type":"string",
-                         "value":"180"
+                         "value":"250"
                         }],
                  "rotation":-495,
                  "type":"",
@@ -1093,7 +1093,7 @@
                         {
                          "name":"period",
                          "type":"string",
-                         "value":"180"
+                         "value":"250"
                         }],
                  "rotation":-495,
                  "type":"",
@@ -1120,7 +1120,7 @@
                         {
                          "name":"period",
                          "type":"string",
-                         "value":"180"
+                         "value":"250"
                         }],
                  "rotation":-495,
                  "type":"",
@@ -1147,7 +1147,7 @@
                         {
                          "name":"period",
                          "type":"string",
-                         "value":"180"
+                         "value":"250"
                         }],
                  "rotation":-495,
                  "type":"",
@@ -1174,7 +1174,7 @@
                         {
                          "name":"period",
                          "type":"string",
-                         "value":"180"
+                         "value":"250"
                         }],
                  "rotation":-495,
                  "type":"",
@@ -1390,7 +1390,7 @@
                         {
                          "name":"period",
                          "type":"string",
-                         "value":"100"
+                         "value":"150"
                         }],
                  "rotation":-945,
                  "type":"",
@@ -1430,7 +1430,7 @@
                         {
                          "name":"text",
                          "type":"string",
-                         "value":"part 8 of ?\n\nWhere am I? Is that the moon...?\n\n@$#\u00a3! I've started floating around, I can't tell what ways up and whats down.\n\nIt is pretty up here at least. Reminds me of that fantasy story where the heros go to space to find the sorceress and just act like its no big deal.\n"
+                         "value":"We did it - we're saved! Those fools said it couldn't be done, they called me eccentric... but who's laughing now?\n\nThe inner chamber of Factory A3 is now our fortress in the heavens. A beacon of humanity. The gods have blessed us and allowed our scientists and engineers to save us from the plagues of the earth."
                         }],
                  "rotation":-180,
                  "type":"",
