@@ -14,6 +14,7 @@ class Scene_levelSelect extends Phaser.Scene {
       var yi = Math.floor(i/nrow)
       this.addButton(450+ 160*yi, 150+30*xi, "Level "+i, "level "+i)
     }
+    this.addButton(450+ 80, 150+180, "Level end", "level end")
 
 
     this.input.on('gameobjectover', function (pointer, button)
@@ -28,14 +29,15 @@ class Scene_levelSelect extends Phaser.Scene {
     this.input.on('gameobjectup', function (pointer, button)
     {
       if(button.getData('index') === 'return') {
-        this.scene.launch('MainMenu')
+        this.scene.resume('MainMenu')
         this.scene.remove('LevelSelect')
       } else if (button.getData('index').includes('level')) {
         game.scene.add('GameScene', new Scene_game(), true, {level: button.getData('index').split(" ")[1]})
         game.scene.add('UIScene', new Scene_UI(), true)
         this.scene.remove('LevelSelect')
         //launch and then remove scene to prevent crash on stopping a paused matter physics
-        this.scene.launch('MainMenu')
+        this.scene.resume('MainMenu')
+        game.scene.getScene('MainMenu').bgMusic.stop();
         this.scene.remove('MainMenu')
       }
 

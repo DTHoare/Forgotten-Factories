@@ -11,6 +11,9 @@ class Scene_menu extends Phaser.Scene {
     this.addButton(550, 250, "level select", "level select")
     this.addButton(550, 300, "credits", "credits")
 
+    this.bgMusic = this.sound.add('titleMusic', {loop: true})
+    this.bgMusic.play();
+
     if (mute) {
       var soundButton = this.addButton(800, 650, "Unmute", "Mute")
     } else {
@@ -36,13 +39,14 @@ class Scene_menu extends Phaser.Scene {
     {
       if(button.getData('index') === 'start') {
         game.scene.add('Message', new Scene_message(), true)
+        this.bgMusic.stop();
         this.scene.remove('MainMenu')
       } else if (button.getData('index') === 'level select') {
         game.scene.add('LevelSelect', new Scene_levelSelect(), true)
-        this.scene.stop('MainMenu')
+        this.scene.pause('MainMenu')
       } else if (button.getData('index') === 'credits') {
         game.scene.add('Credits', new Scene_credits(), true)
-        this.scene.stop('MainMenu')
+        this.scene.pause('MainMenu')
       } else if(button.getData('index') === 'Mute') {
         if(mute) {
           mute = false
@@ -81,6 +85,11 @@ class Scene_menu extends Phaser.Scene {
       }
     }
     return buttonObj
+  }
+
+  destroy() {
+    this.bgMusic.stop();
+    console.log("Main menu stopped");
   }
 
 }

@@ -180,7 +180,7 @@ class Scene_game extends Phaser.Scene {
         this.sound.stopAll()
         this.bgMusic = null;
         if(!this.bgMusic) {
-          this.bgMusic = this.sound.add('indoorMusic', {loop: true})
+          this.bgMusic = this.sound.add('indoorMusic2', {loop: true})
           this.bgMusic.play();
         }
         break;
@@ -189,8 +189,10 @@ class Scene_game extends Phaser.Scene {
         tileSheet = "tiles_factory"
         doorGraphic = "door_factory"
         bg = this.add.image(480, 360, 'bg_end');
-        this.bgMusic.stop()
-        this.bgMusic = null;
+        if(this.bgMusic) {
+          this.bgMusic.stop()
+          this.bgMusic = null;
+        }
         break;
     }
     bg.setScrollFactor(0)

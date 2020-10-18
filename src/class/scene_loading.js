@@ -53,8 +53,8 @@ class Scene_loading extends Phaser.Scene {
     this.load.spritesheet('button', 'assets/button.png', {frameWidth: 128, frameHeight: 48});
     this.load.spritesheet('laser', 'assets/laser.png', {frameWidth: 16, frameHeight: 160});
 
-    this.load.audio('step1', 'assets/sound/stepLeft3.mp3')
-    this.load.audio('step2', 'assets/sound/stepRight3.mp3')
+    this.load.audio('step1', 'assets/sound/stepLeft_b2.mp3')
+    this.load.audio('step2', 'assets/sound/stepRight_b2.mp3')
     this.load.audio('land', 'assets/sound/landing.mp3')
     this.load.audio('bounce', 'assets/sound/landing2.mp3')
 
@@ -63,10 +63,12 @@ class Scene_loading extends Phaser.Scene {
     this.load.audio('fire', 'assets/sound/whoosh.mp3')
     this.load.audio('tap', 'assets/sound/tap.mp3')
 
-    this.load.audio('outdoorMusic', 'assets/sound/Almost New.mp3')
-    this.load.audio('indoorMusic', 'assets/sound/Intended Force.mp3')
-    this.load.audio('spaceMusic', 'assets/sound/Floating Cities.mp3')
-    this.load.audio('winMusic', 'assets/sound/Heroic Age.mp3')
+    this.load.audio('titleMusic', 'assets/sound/OST/title_screen.mp3')
+    this.load.audio('outdoorMusic', 'assets/sound/OST/new_wonders.mp3')
+    this.load.audio('indoorMusic', 'assets/sound/OST/factory.mp3')
+    this.load.audio('spaceMusic', 'assets/sound/OST/floating.mp3')
+    this.load.audio('indoorMusic2', 'assets/sound/OST/factory_remix.mp3')
+    this.load.audio('winMusic', 'assets/sound/OST/victory.mp3')
 
 
     this.load.image('ui', 'assets/UI_placeholder.png');

@@ -286,6 +286,9 @@ class Scene_menu extends Phaser.Scene {
     this.addButton(550, 250, "level select", "level select")
     this.addButton(550, 300, "credits", "credits")
 
+    this.bgMusic = this.sound.add('titleMusic', {loop: true})
+    this.bgMusic.play();
+
     if (mute) {
       var soundButton = this.addButton(800, 650, "Unmute", "Mute")
     } else {
@@ -311,13 +314,14 @@ class Scene_menu extends Phaser.Scene {
     {
       if(button.getData('index') === 'start') {
         game.scene.add('Message', new Scene_message(), true)
+        this.bgMusic.stop();
         this.scene.remove('MainMenu')
       } else if (button.getData('index') === 'level select') {
         game.scene.add('LevelSelect', new Scene_levelSelect(), true)
-        this.scene.stop('MainMenu')
+        this.scene.pause('MainMenu')
       } else if (button.getData('index') === 'credits') {
         game.scene.add('Credits', new Scene_credits(), true)
-        this.scene.stop('MainMenu')
+        this.scene.pause('MainMenu')
       } else if(button.getData('index') === 'Mute') {
         if(mute) {
           mute = false
@@ -356,6 +360,11 @@ class Scene_menu extends Phaser.Scene {
       }
     }
     return buttonObj
+  }
+
+  destroy() {
+    this.bgMusic.stop();
+    console.log("Main menu stopped");
   }
 
 }
@@ -1309,17 +1318,18 @@ class Scene_credits extends Phaser.Scene {
   }
 
   create () {
+    //dumb method to get a black background...
+    var bg = this.add.image(480, 360, 'bg_menu');
+    bg.setTint(0x000000);
     this.add.bitmapText(100, 200, 'editundo', "Created by Daniel Hoare")
-    this.add.bitmapText(50, 400, 'editundo', "'Almost New', 'Intended Force', 'Heroic Age' & 'Floating Cities'")
-    this.add.bitmapText(50, 430, 'editundo', "       - Kevin MacLeod (incompetech.com)")
-    this.add.bitmapText(50, 460, 'editundo', "Licensed under Creative Commons: By Attribution 3.0")
+
     this.add.bitmapText(100, 600, 'editundo', "Special thanks to Joellen for her patience")
 
     var text = this.add.bitmapText(300, 50, 'editundo', "Click to return")
     text.setTint(0xcf4ed8)
 
     this.input.on("pointerup", function() {
-      this.scene.launch('MainMenu')
+      this.scene.resume('MainMenu')
       this.scene.remove("Credits")
     }, this)
 
@@ -1509,7 +1519,7 @@ class Scene_game extends Phaser.Scene {
         this.sound.stopAll()
         this.bgMusic = null;
         if(!this.bgMusic) {
-          this.bgMusic = this.sound.add('indoorMusic', {loop: true})
+          this.bgMusic = this.sound.add('indoorMusic2', {loop: true})
           this.bgMusic.play();
         }
         break;
@@ -1518,8 +1528,10 @@ class Scene_game extends Phaser.Scene {
         tileSheet = "tiles_factory"
         doorGraphic = "door_factory"
         bg = this.add.image(480, 360, 'bg_end');
-        this.bgMusic.stop()
-        this.bgMusic = null;
+        if(this.bgMusic) {
+          this.bgMusic.stop()
+          this.bgMusic = null;
+        }
         break;
     }
     bg.setScrollFactor(0)
@@ -2084,6 +2096,7 @@ class Scene_levelSelect extends Phaser.Scene {
       var yi = Math.floor(i/nrow)
       this.addButton(450+ 160*yi, 150+30*xi, "Level "+i, "level "+i)
     }
+    this.addButton(450+ 80, 150+180, "Level end", "level end")
 
 
     this.input.on('gameobjectover', function (pointer, button)
@@ -2098,14 +2111,15 @@ class Scene_levelSelect extends Phaser.Scene {
     this.input.on('gameobjectup', function (pointer, button)
     {
       if(button.getData('index') === 'return') {
-        this.scene.launch('MainMenu')
+        this.scene.resume('MainMenu')
         this.scene.remove('LevelSelect')
       } else if (button.getData('index').includes('level')) {
         game.scene.add('GameScene', new Scene_game(), true, {level: button.getData('index').split(" ")[1]})
         game.scene.add('UIScene', new Scene_UI(), true)
         this.scene.remove('LevelSelect')
         //launch and then remove scene to prevent crash on stopping a paused matter physics
-        this.scene.launch('MainMenu')
+        this.scene.resume('MainMenu')
+        game.scene.getScene('MainMenu').bgMusic.stop();
         this.scene.remove('MainMenu')
       }
 
@@ -2188,8 +2202,8 @@ class Scene_loading extends Phaser.Scene {
     this.load.spritesheet('button', 'assets/button.png', {frameWidth: 128, frameHeight: 48});
     this.load.spritesheet('laser', 'assets/laser.png', {frameWidth: 16, frameHeight: 160});
 
-    this.load.audio('step1', 'assets/sound/stepLeft3.mp3')
-    this.load.audio('step2', 'assets/sound/stepRight3.mp3')
+    this.load.audio('step1', 'assets/sound/stepLeft_b2.mp3')
+    this.load.audio('step2', 'assets/sound/stepRight_b2.mp3')
     this.load.audio('land', 'assets/sound/landing.mp3')
     this.load.audio('bounce', 'assets/sound/landing2.mp3')
 
@@ -2198,10 +2212,12 @@ class Scene_loading extends Phaser.Scene {
     this.load.audio('fire', 'assets/sound/whoosh.mp3')
     this.load.audio('tap', 'assets/sound/tap.mp3')
 
-    this.load.audio('outdoorMusic', 'assets/sound/Almost New.mp3')
-    this.load.audio('indoorMusic', 'assets/sound/Intended Force.mp3')
-    this.load.audio('spaceMusic', 'assets/sound/Floating Cities.mp3')
-    this.load.audio('winMusic', 'assets/sound/Heroic Age.mp3')
+    this.load.audio('titleMusic', 'assets/sound/OST/title_screen.mp3')
+    this.load.audio('outdoorMusic', 'assets/sound/OST/new_wonders.mp3')
+    this.load.audio('indoorMusic', 'assets/sound/OST/factory.mp3')
+    this.load.audio('spaceMusic', 'assets/sound/OST/floating.mp3')
+    this.load.audio('indoorMusic2', 'assets/sound/OST/factory_remix.mp3')
+    this.load.audio('winMusic', 'assets/sound/OST/victory.mp3')
 
 
     this.load.image('ui', 'assets/UI_placeholder.png');
@@ -2761,7 +2777,7 @@ class Barrier extends Structure {
   constructor(scene, x, y, texture, objectConfig){
     super(scene, x, y, texture, objectConfig)
     this.age = 0;
-    this.maxAge = 150;
+    this.maxAge = 300;
     this.setTint(0x60fcff);
 
     this.scene.events.on("preupdate", this.update, this);
