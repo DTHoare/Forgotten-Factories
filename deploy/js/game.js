@@ -1935,10 +1935,10 @@ class Scene_game extends Phaser.Scene {
     // this prevents instant double jumps
     if (Phaser.Input.Keyboard.JustDown(this.cursors.up) || Phaser.Input.Keyboard.JustDown(this.keyW)) {
       if (player.isTouching.ground && this.focus == player) {
-        player.setVelocityY(-8);
+        player.setVelocityY(-10);
       } else if (player.state.mana >= 80 && this.focus == player) {
         this.sound.play('fire', {volume:0.3})
-        player.setVelocityY(-10);
+        player.setVelocityY(-14);
         player.state.spendMana(80);
         player.jumpParticles(this);
       }
