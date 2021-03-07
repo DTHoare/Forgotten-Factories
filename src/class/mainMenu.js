@@ -6,7 +6,7 @@ class Scene_menu extends Phaser.Scene {
   }
 
   create() {
-    this.add.image(480, 360, 'bg_menu');
+    this.bg = this.add.image(480, 360, 'bg_menu');
     this.addButton(650, 200, "start", "start")
     this.addButton(650, 250, "level select", "level select")
     this.addButton(650, 300, "credits", "credits")

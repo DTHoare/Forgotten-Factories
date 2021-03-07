@@ -281,7 +281,7 @@ class Scene_menu extends Phaser.Scene {
   }
 
   create() {
-    this.add.image(480, 360, 'bg_menu');
+    this.bg = this.add.image(480, 360, 'bg_menu');
     this.addButton(650, 200, "start", "start")
     this.addButton(650, 250, "level select", "level select")
     this.addButton(650, 300, "credits", "credits")
@@ -2920,9 +2920,9 @@ class Laser extends Structure {
 
 var config = {
    type: Phaser.AUTO,
-   width: 32*30,
-   height: 32*30*3/4,
-   pixelArt: true,
+   width: 960, //32*30,
+   height: 720, //32*30*3/4,
+   pixelArt: false,
    physics: {
       default: 'matter',
       matter: {
