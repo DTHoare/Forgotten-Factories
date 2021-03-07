@@ -7,9 +7,9 @@ class Scene_menu extends Phaser.Scene {
 
   create() {
     this.add.image(480, 360, 'bg_menu');
-    this.addButton(550, 200, "start", "start")
-    this.addButton(550, 250, "level select", "level select")
-    this.addButton(550, 300, "credits", "credits")
+    this.addButton(650, 200, "start", "start")
+    this.addButton(650, 250, "level select", "level select")
+    this.addButton(650, 300, "credits", "credits")
 
     this.bgMusic = this.sound.add('titleMusic', {loop: true})
     this.bgMusic.play();
@@ -70,6 +70,10 @@ class Scene_menu extends Phaser.Scene {
     }, this);
   }
 
+  update() {
+      this.checkSound();
+  }
+
   addButton(x, y, text, scene) {
     var button = this.add.sprite(x, y, 'button', 0).setInteractive()
     button.setData('index', scene)
@@ -87,9 +91,18 @@ class Scene_menu extends Phaser.Scene {
     return buttonObj
   }
 
+  checkSound() {
+    if(mute) {
+      this.sound.setMute(true)
+    } else {
+      this.sound.setMute(false)
+    }
+  }
+
   destroy() {
     this.bgMusic.stop();
     console.log("Main menu stopped");
+    this.events.off("checkSound", this.checkSound, this);
   }
 
 }
