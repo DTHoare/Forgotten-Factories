@@ -24,6 +24,11 @@ module.exports = function (grunt) {
                    ],
               dest: 'deploy/js/phaser-slopes.min.js'
             },
+		phaserMatterCollisionPlugin: {
+              src: [  "src/lib/phaser-matter-collision-plugin.min.js"
+                   ],
+              dest: 'deploy/js/phaser-matter-collision-plugin.min.js'
+            },
             dist: {
                 src: [  "src/class/**/*.js",
                     "src/game/**/*.js"
